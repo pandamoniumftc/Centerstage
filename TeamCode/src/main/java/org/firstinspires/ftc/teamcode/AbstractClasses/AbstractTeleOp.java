@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.AbstractClasses;
 
+import com.qualcomm.robotcore.util.RobotLog;
+
 import java.io.IOException;
 
 public abstract class AbstractTeleOp extends AbstractOpMode {
@@ -16,11 +18,17 @@ public abstract class AbstractTeleOp extends AbstractOpMode {
 
         AbstractRobot robot = getRobot();
 
+        RobotLog.ii("before try catch", "woo");
+
         try {
             robot.init();
             onInit();
 
+            RobotLog.ii("before while loop", "woo");
+
             while (!isStarted() && !isStopRequested()) {}
+
+            RobotLog.ii("after while loop", "woo");
 
             robot.start();
             onStart();
