@@ -20,7 +20,10 @@ public class Outtake extends AbstractSubsystem {
     public final double[] releaseServoPos = new double[] {0, 0.08, 0.45, 0.58};
     public int pixelsCollected;
     public enum detectedColor {
-        FRONT_PURPLE(),
+        WHITE,
+        PURPLE,
+        GREEN,
+        YELLOW
     }
     public long startTimeStamp;
     public Toggle released = new Toggle(false);
@@ -43,7 +46,7 @@ public class Outtake extends AbstractSubsystem {
     }
 
     @Override
-    public void init() throws IOException {
+    public void init() {
         lSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         fReleaseServo.setPosition(releaseServoPos[3]);
@@ -61,7 +64,7 @@ public class Outtake extends AbstractSubsystem {
         double power = robot.gamepad2.right_stick_y;
         double speedMultiplier = (1 - robot.gamepad2.left_trigger) * 0.75 + 0.25;
 
-        // trigger input at 0: 100% power, trigger input at 1: 25%
+        // trigger input at 0: 100% power, trigger input at 1: 25% power
 
         if (lSlideMotor.getCurrentPosition() < slidesBounds[0] && rSlideMotor.getCurrentPosition() < slidesBounds[0]) {
             power = Math.min(0, power);
@@ -70,33 +73,37 @@ public class Outtake extends AbstractSubsystem {
             power = Math.max(0, power);
         }
 
-        /*if (frontColorSensor.argb() == 1 && backColorSensor.argb() == 1) {
+        lSlideMotor.setPower(-power * speedMultiplier);
+        rSlideMotor.setPower(-power * speedMultiplier);
+
+        // keeps track of pixels collected in outtake
+
+        if (frontSensor.getDistance(DistanceUnit.INCH) > .55 && backSensor.getDistance(DistanceUnit.INCH) > .55) {
+            pixelsCollected = 0;
+        }
+        if (frontSensor.getDistance(DistanceUnit.INCH) < .55 ^ backSensor.getDistance(DistanceUnit.INCH) < .55) {
+            pixelsCollected = 1;
+        }
+        else {
             pixelsCollected = 2;
         }
-        if (frontColorSensor.argb() == 1 && backColorSensor.argb() == 1) {
-            pixelsCollected = 2;
-        }*/
+
+        // function to deposit pixel
 
         released.updateState(robot.gamepad2.left_bumper);
 
-        if (frontSensor.getDistance(DistanceUnit.INCH) < 0.26) {
-            startTimeStamp = System.currentTimeMillis();
-            if (System.currentTimeMillis() - startTimeStamp > 1500.0) {bReleaseServo.setPosition(releaseServoPos[1]);}
+        if (frontSensor.getDistance(DistanceUnit.INCH) < 0.55 && backSensor.getDistance(DistanceUnit.INCH) > 0.55) {
+            bReleaseServo.setPosition(releaseServoPos[1]); // back down
         }
 
         if (released.state) {
-            startTimeStamp = System.currentTimeMillis();
-            fReleaseServo.setPosition(releaseServoPos[2]);
-            if (frontSensor.getDistance(DistanceUnit.INCH) > 0.26 && (System.currentTimeMillis() - startTimeStamp > 1500.0)) {
-                fReleaseServo.setPosition(releaseServoPos[3]);
-                bReleaseServo.setPosition(releaseServoPos[0]);
+            fReleaseServo.setPosition(releaseServoPos[2]); // front up
+            if (frontSensor.getDistance(DistanceUnit.INCH) > 0.55) {
+                fReleaseServo.setPosition(releaseServoPos[3]); // front down
+                bReleaseServo.setPosition(releaseServoPos[0]); // back up
+                released.state = false;
             }
-            if (backSensor.getDistance(DistanceUnit.INCH) > 0.55 && frontSensor.getDistance(DistanceUnit.INCH) < 0.55) {bReleaseServo.setPosition(releaseServoPos[1]);}
-            released.state = false;
         }
-
-        lSlideMotor.setPower(-power * speedMultiplier);
-        rSlideMotor.setPower(-power * speedMultiplier);
 
         telemetry.addData("slide motor power: ", power);
         telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
@@ -107,6 +114,7 @@ public class Outtake extends AbstractSubsystem {
         telemetry.addData("back sensor dis: ", backSensor.getDistance(DistanceUnit.INCH));
         telemetry.addData("time: ", System.currentTimeMillis());
         telemetry.addData("stamp: ", startTimeStamp);
+        telemetry.addData("pixels: ", pixelsCollected);
     }
 
     @Override
