@@ -30,15 +30,6 @@ public class Outtake extends AbstractSubsystem {
         GREEN,
         YELLOW
     }
-    Point[] AccelerationPoints = new Point[] {
-            new Point(-1, -1),
-            new Point(0, 0.9),
-            new Point(0, -0.9),
-            new Point(1, 1)
-    };
-    VariantDegreeBezier variantDegreeBezierCurve = new VariantDegreeBezier(AccelerationPoints);
-    Curve[] Curve = new Curve[]{variantDegreeBezierCurve};
-    public CurveSequence AccelerationProfile = new CurveSequence(Curve);
     public long startTimeStamp;
     public Toggle released = new Toggle(false);
     public Outtake(AbstractRobot robot, String lsm, String rsm, String lts, String rts, String frs, String brs, String fSensor, String bSensor) {

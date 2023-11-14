@@ -18,6 +18,16 @@ import java.io.IOException;
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public SampleMecanumDrive drive;
 
+    Point[] AccelerationPoints = new Point[] {
+            new Point(-1, -1),
+            new Point(0, 0.9),
+            new Point(0, -0.9),
+            new Point(1, 1)
+    };
+    VariantDegreeBezier variantDegreeBezierCurve = new VariantDegreeBezier(AccelerationPoints);
+    Curve[] Curve = new Curve[]{variantDegreeBezierCurve};
+    public CurveSequence AccelerationProfile = new CurveSequence(Curve);
+
     /*
     flm = control hub, port 3
     frm = expansion hub, port 0
@@ -44,20 +54,16 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public void driverLoop() {
 
         Vector2d input = new Vector2d(
-                //sequence.evaluate((robot.gamepad1.left_stick_y - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX))
                 robot.gamepad1.left_stick_y,
-                //sequence.evaluate((robot.gamepad1.left_stick_x - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX))
                 robot.gamepad1.left_stick_x
-        );//.rotated(drive.getPoseEstimate().getHeading()); //field centric
-
-        double speedMultiplier = (1 - robot.gamepad1.right_trigger) * 0.75 + 0.25;
+        ).rotated(-drive.getPoseEstimate().getHeading()); //field centric
 
         drive.setWeightedDrivePower(
                 new Pose2d(
-                        input.getX() * speedMultiplier,
-                        input.getY() * speedMultiplier,
-                        //sequence.evaluate((robot.gamepad1.right_stick_x - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX)) * speedMultiplier
-                        robot.gamepad1.right_stick_x * speedMultiplier
+                        AccelerationProfile.evaluate((input.getX() - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX)),
+                        AccelerationProfile.evaluate((input.getY() - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX)),
+                        -AccelerationProfile.evaluate((robot.gamepad1.right_stick_x - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX))
+                        //robot.gamepad1.right_stick_x * speedMultiplier
                 )
         );
 
