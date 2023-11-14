@@ -17,15 +17,6 @@ import java.io.IOException;
 
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public SampleMecanumDrive drive;
-    Point[] AccelerationProfile = new Point[] {
-            new Point(-1, -1),
-            new Point(0, 0.9),
-            new Point(0, -0.9),
-            new Point(1, 1)
-    };
-    VariantDegreeBezier variantDegreeBezierCurve = new VariantDegreeBezier(AccelerationProfile);
-    Curve[] Curve = new Curve[]{variantDegreeBezierCurve};
-    public CurveSequence sequence = new CurveSequence(Curve);
 
     /*
     flm = control hub, port 3
@@ -54,9 +45,9 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
 
         Vector2d input = new Vector2d(
                 //sequence.evaluate((robot.gamepad1.left_stick_y - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX))
-                robot.gamepad1.left_stick_x,
+                robot.gamepad1.left_stick_y,
                 //sequence.evaluate((robot.gamepad1.left_stick_x - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX))
-                robot.gamepad1.left_stick_y
+                robot.gamepad1.left_stick_x
         );//.rotated(drive.getPoseEstimate().getHeading()); //field centric
 
         double speedMultiplier = (1 - robot.gamepad1.right_trigger) * 0.75 + 0.25;
@@ -66,7 +57,7 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
                         input.getX() * speedMultiplier,
                         input.getY() * speedMultiplier,
                         //sequence.evaluate((robot.gamepad1.right_stick_x - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX)) * speedMultiplier
-                        -robot.gamepad1.right_stick_x * speedMultiplier
+                        robot.gamepad1.right_stick_x * speedMultiplier
                 )
         );
 

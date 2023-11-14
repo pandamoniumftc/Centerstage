@@ -17,6 +17,6 @@ public class BaoBao extends AbstractRobot {
         super(opMode);
         drive = new RoadRunnerMecanumDrive(this);
         outtake = new Outtake(this, "lsm", "rsm", "lts", "rts", "frs", "brs", "fSensor", "bSensor");
-        intake = new Intake(this, "intakeM");
+        intake = new Intake(this, "intakeM", "intakeS");
     }
 }

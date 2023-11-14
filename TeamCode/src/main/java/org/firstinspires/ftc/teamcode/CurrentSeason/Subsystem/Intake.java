@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem;
 
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
@@ -14,13 +16,14 @@ import java.io.IOException;
 public class Intake extends AbstractSubsystem {
     BaoBao robot;
     public DcMotor intakeMotor;
+    public Servo intakeServo;
     public Toggle intake_toggle = new Toggle(false);
-    DcMotorEx iMotor;
-    public Intake(AbstractRobot robot, String intakeM) {
+    public Intake(AbstractRobot robot, String intakeM, String intakeS) {
         super(robot);
         this.robot = (BaoBao) robot;
 
         intakeMotor = robot.hardwareMap.get(DcMotor.class, intakeM);
+        intakeServo = robot.hardwareMap.get(Servo.class, intakeS);
 
     }
 
@@ -36,7 +39,11 @@ public class Intake extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        intakeMotor.setPower(robot.gamepad2.left_stick_y);
+        intakeMotor.setPower(robot.gamepad2.left_stick_y * .44);
+        double servoPower = -robot.gamepad2.left_stick_y * 0.5 + .5;
+        intakeServo.setPosition(servoPower);
+
+        robot.telemetry.addData("servo power: ", servoPower);
     }
 
     @Override
