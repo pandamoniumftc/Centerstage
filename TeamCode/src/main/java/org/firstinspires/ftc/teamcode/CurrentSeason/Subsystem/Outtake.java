@@ -23,6 +23,17 @@ public class Outtake extends AbstractSubsystem {
     public int[] slidesPos = new int[] {0, 100, 200, 300};
     public final int[] slidesBounds = new int[] {0, 1500};
     public final double[] releaseServoPos = new double[] {0, 0.08, 0.45, 0.58};
+    public final double[] tiltServoPos = new double[] {0, 1, 0.3, 0.35};
+    private final Point[] ExponentialPoints = new Point[] {
+            new Point(0, 0),
+            new Point(.5, .1),
+            new Point(1, 0.25),
+            new Point(1, 1)
+    };
+    VariantDegreeBezier vdbc = new VariantDegreeBezier(ExponentialPoints);
+
+    Curve[] curve = new Curve[]{vdbc};
+    public CurveSequence slidePowerCurve;
     public int pixelsCollected;
     public enum detectedColor {
         WHITE,
@@ -32,7 +43,7 @@ public class Outtake extends AbstractSubsystem {
     }
     public long startTimeStamp;
     public Toggle released = new Toggle(false);
-    public Outtake(AbstractRobot robot, String lsm, String rsm, String lts, String rts, String frs, String brs, String fSensor, String bSensor) {
+    public Outtake(AbstractRobot robot, String lsm, String rsm, String lts, String rts, String frs, String brs, String fSensor, String bSensor/*, CurveSequence slidePowerCurve*/) {
         super(robot);
 
         lSlideMotor = robot.hardwareMap.get(DcMotor.class, lsm);
@@ -43,11 +54,13 @@ public class Outtake extends AbstractSubsystem {
         fReleaseServo = robot.hardwareMap.get(Servo.class, frs);
         bReleaseServo = robot.hardwareMap.get(Servo.class, brs);
 
-        //frontSensor = robot.hardwareMap.get(RevColorSensorV3.class, fSensor);
-        //backSensor = robot.hardwareMap.get(RevColorSensorV3.class, bSensor);
+        frontSensor = robot.hardwareMap.get(RevColorSensorV3.class, fSensor);
+        backSensor = robot.hardwareMap.get(RevColorSensorV3.class, bSensor);
 
         lSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        this.slidePowerCurve = new CurveSequence(curve);
     }
 
     @Override
@@ -55,22 +68,24 @@ public class Outtake extends AbstractSubsystem {
         rSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         lSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rTiltServo.setDirection(Servo.Direction.REVERSE);
+        lTiltServo.setDirection(Servo.Direction.REVERSE);
         fReleaseServo.setPosition(releaseServoPos[3]);
         bReleaseServo.setPosition(releaseServoPos[0]);
+        rTiltServo.setPosition(releaseServoPos[2]);
+        lTiltServo.setPosition(releaseServoPos[0]);
     }
 
     @Override
     public void start() {
         lSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
     }
 
     @Override
     public void driverLoop() {
-        double power = robot.gamepad2.right_stick_y;//AccelerationProfile.evaluate((robot.gamepad1.right_stick_y - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX));
-        double speedMultiplier = (1 - robot.gamepad2.left_trigger) * 0.75 + 0.25;
-
-        // trigger input at 0: 100% power, trigger input at 1: 25% power
+        double power = robot.gamepad2.right_stick_y;//slidePowerCurve.evaluate((Math.abs(robot.gamepad2.right_stick_y) - slidePowerCurve.minX) / (slidePowerCurve.maxX - slidePowerCurve.minX));
 
         if (lSlideMotor.getCurrentPosition() < slidesBounds[0] && rSlideMotor.getCurrentPosition() < slidesBounds[0]) {
             power = Math.min(0, power);
@@ -79,12 +94,12 @@ public class Outtake extends AbstractSubsystem {
             power = Math.max(0, power);
         }
 
-        lSlideMotor.setPower(-power * speedMultiplier);
-        rSlideMotor.setPower(-power * speedMultiplier);
+        lSlideMotor.setPower(-power * .75/*robot.gamepad2.right_stick_y < 0 ? power : -power*/);
+        rSlideMotor.setPower(-power * .75/*robot.gamepad2.right_stick_y < 0 ? power : -power*/);
 
         // keeps track of pixels collected in outtake
 
-        /*if (frontSensor.getDistance(DistanceUnit.INCH) > .55 && backSensor.getDistance(DistanceUnit.INCH) > .55) {
+        if (frontSensor.getDistance(DistanceUnit.INCH) > .55 && backSensor.getDistance(DistanceUnit.INCH) > .55) {
             pixelsCollected = 0;
         }
         if (frontSensor.getDistance(DistanceUnit.INCH) < .55 ^ backSensor.getDistance(DistanceUnit.INCH) < .55) {
@@ -113,15 +128,23 @@ public class Outtake extends AbstractSubsystem {
                 bReleaseServo.setPosition(releaseServoPos[0]); // back up
                 released.state = false;
             }
-        }*/
+        }
+
+        lTiltServo.setPosition(tiltServoPos[robot.gamepad2.a ? 1 : 0]);
+        //rTiltServo.setPosition(tiltServoPos[robot.gamepad2.b ? 3 : 2]);
+
+        lTiltServo.setPosition(robot.gamepad2.right_trigger * tiltServoPos[0] + (1 - robot.gamepad2.right_trigger) * tiltServoPos[1]);
+        //rTiltServo.setPosition(robot.gamepad2.right_trigger * tiltServoPos[2] + (1 - robot.gamepad2.right_trigger) * tiltServoPos[3]);
 
         telemetry.addData("slide motor power: ", power);
         telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
         telemetry.addData("right slide motor: ", rSlideMotor.getCurrentPosition());
-        telemetry.addData("left servo pos: ", fReleaseServo.getPosition());
-        telemetry.addData("right servo pos: ", bReleaseServo.getPosition());
-        //telemetry.addData("front sensor dis: ", frontSensor.getDistance(DistanceUnit.INCH));
-        //telemetry.addData("back sensor dis: ", backSensor.getDistance(DistanceUnit.INCH));
+        telemetry.addData("front servo pos: ", fReleaseServo.getPosition());
+        telemetry.addData("back servo pos: ", bReleaseServo.getPosition());
+        telemetry.addData("left servo pos: ", lTiltServo.getPosition());
+        telemetry.addData("right servo pos: ", rTiltServo.getPosition());
+        telemetry.addData("front sensor dis: ", frontSensor.getDistance(DistanceUnit.INCH));
+        telemetry.addData("back sensor dis: ", backSensor.getDistance(DistanceUnit.INCH));
         telemetry.addData("time: ", System.currentTimeMillis());
         telemetry.addData("stamp: ", startTimeStamp);
         telemetry.addData("pixels: ", pixelsCollected);

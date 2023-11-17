@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractSubsystem;
@@ -14,19 +15,22 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.opencv.core.Point;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public SampleMecanumDrive drive;
-
-    Point[] AccelerationPoints = new Point[] {
-            new Point(-1, -1),
-            new Point(0, 0.9),
-            new Point(0, -0.9),
+    private final Point[] JumpPoints = new Point[] {
+            new Point(0, 0),
+            new Point(0, 1),
+            new Point(1, 0),
             new Point(1, 1)
     };
-    VariantDegreeBezier variantDegreeBezierCurve = new VariantDegreeBezier(AccelerationPoints);
-    Curve[] Curve = new Curve[]{variantDegreeBezierCurve};
-    public CurveSequence AccelerationProfile = new CurveSequence(Curve);
+
+    VariantDegreeBezier vdbc = new VariantDegreeBezier(JumpPoints);
+
+    Curve[] curve = new Curve[]{vdbc};
+    //public CurveSequence movementCurve, pivotCurve;
+    public CurveSequence curveSequence = new CurveSequence(curve);
 
     /*
     flm = control hub, port 3
@@ -35,7 +39,7 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     brm = expansion hub, port 1
      */
 
-    public RoadRunnerMecanumDrive(AbstractRobot robot) {
+    public RoadRunnerMecanumDrive(AbstractRobot robot/*CurveSequence movementCurve, CurveSequence pivotCurve*/) {
         super(robot);
     }
 
@@ -60,10 +64,9 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
 
         drive.setWeightedDrivePower(
                 new Pose2d(
-                        AccelerationProfile.evaluate((input.getX() - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX)),
-                        AccelerationProfile.evaluate((input.getY() - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX)),
-                        -AccelerationProfile.evaluate((robot.gamepad1.right_stick_x - (variantDegreeBezierCurve.minX)) / (variantDegreeBezierCurve.maxX - variantDegreeBezierCurve.minX))
-                        //robot.gamepad1.right_stick_x * speedMultiplier
+                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getX(), -1, 1))) * Math.signum(input.getX()),
+                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getY(), -1, 1))) * Math.signum(input.getY()),
+                        robot.gamepad1.right_stick_x//this.pivotCurve.evaluate((robot.gamepad1.right_stick_x - (pivotCurve.minX)) / (pivotCurve.maxX - pivotCurve.minX))
                 )
         );
 

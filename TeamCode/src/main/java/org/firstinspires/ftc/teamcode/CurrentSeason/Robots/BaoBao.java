@@ -7,14 +7,17 @@ import org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem.Intake;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem.RoadRunnerMecanumDrive;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Util.GamepadSettings;
+import org.firstinspires.ftc.teamcode.CurvesPort.CurveLibrary;
 import org.opencv.core.Point;
 
 public class BaoBao extends AbstractRobot {
     public RoadRunnerMecanumDrive drive;
     public Intake intake;
     public Outtake outtake;
+    public CurveLibrary curveLibrary;
     public BaoBao(OpMode opMode) {
         super(opMode);
+        curveLibrary = new CurveLibrary();
         drive = new RoadRunnerMecanumDrive(this);
         outtake = new Outtake(this, "lsm", "rsm", "lts", "rts", "frs", "brs", "fSensor", "bSensor");
         intake = new Intake(this, "intakeM", "intakeS");
