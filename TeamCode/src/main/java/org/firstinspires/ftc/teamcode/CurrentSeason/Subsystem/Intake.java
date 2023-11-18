@@ -41,8 +41,6 @@ public class Intake extends AbstractSubsystem {
         intakeMotor.setPower(-robot.gamepad2.left_stick_y * .5);
         double servoPower = robot.gamepad2.left_stick_y * 0.5 + .5;
         intakeServo.setPosition(servoPower);
-
-        robot.telemetry.addData("servo power: ", servoPower);
     }
 
     @Override

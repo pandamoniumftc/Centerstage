@@ -41,6 +41,7 @@ public class Outtake extends AbstractSubsystem {
         PURPLE,
         GREEN,
         YELLOW,
+        PIXEL,
         NO_PIXEL
     }
     public long startTimeStamp;
@@ -115,6 +116,9 @@ public class Outtake extends AbstractSubsystem {
         if (frontSensor.getDistance(DistanceUnit.INCH) > .55) {frontSensorState = detected.NO_PIXEL;}
         if (backSensor.getDistance(DistanceUnit.INCH) > .55) {backSensorState = detected.NO_PIXEL;}
 
+        if (frontSensor.getDistance(DistanceUnit.INCH) < .55) {frontSensorState = detected.PIXEL;}
+        if (backSensor.getDistance(DistanceUnit.INCH) < .55) {backSensorState = detected.PIXEL;}
+
         if (frontSensor.getDistance(DistanceUnit.INCH) > .55 && backSensor.getDistance(DistanceUnit.INCH) > .55) {
             pixelsCollected = 0;
         }
@@ -130,7 +134,7 @@ public class Outtake extends AbstractSubsystem {
         if (released.state && lifted.state) {
             fReleaseServo.setPosition(releaseServoPos[2]); // front up
             bReleaseServo.setPosition(releaseServoPos[1]); // back down
-            if (frontSensor.getDistance(DistanceUnit.INCH) > .55) {
+            if (frontSensor.getDistance(DistanceUnit.INCH) > .55 || backSensor.getDistance(DistanceUnit.INCH) > .55) {
                 fReleaseServo.setPosition(releaseServoPos[3]); // front down
                 bReleaseServo.setPosition(releaseServoPos[0]); // back up
                 released.state = false;
@@ -147,29 +151,23 @@ public class Outtake extends AbstractSubsystem {
             }
         }
 
-        if (frontSensor.argb() > 20) {frontSensorState = detected.WHITE;}
+        /*if (frontSensor.argb() > 20) {frontSensorState = detected.WHITE;}
         if (frontSensor.argb() > 3.14) {frontSensorState = detected.PURPLE;}
         if (frontSensor.argb() > 159) {frontSensorState = detected.YELLOW;}
         if (frontSensor.argb() > 265) {frontSensorState = detected.GREEN;}
         if (backSensor.argb() > 20) {backSensorState = detected.WHITE;}
         if (backSensor.argb() > 3.14) {backSensorState = detected.PURPLE;}
         if (backSensor.argb() > 159) {backSensorState = detected.YELLOW;}
-        if (backSensor.argb() > 265) {backSensorState = detected.GREEN;}
+        if (backSensor.argb() > 265) {backSensorState = detected.GREEN;}*/
 
-        telemetry.addData("slide motor power: ", power);
-        telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
-        telemetry.addData("right slide motor: ", rSlideMotor.getCurrentPosition());
-        telemetry.addData("front servo pos: ", fReleaseServo.getPosition());
-        telemetry.addData("back servo pos: ", bReleaseServo.getPosition());
-        telemetry.addData("left servo pos: ", lTiltServo.getPosition());
-        telemetry.addData("right servo pos: ", rTiltServo.getPosition());
-        telemetry.addData("front sensor dis: ", frontSensor.getDistance(DistanceUnit.INCH));
-        telemetry.addData("back sensor dis: ", backSensor.getDistance(DistanceUnit.INCH));
-        telemetry.addData("time: ", System.currentTimeMillis());
-        telemetry.addData("stamp: ", startTimeStamp);
+        telemetry.addData("released: ", released.state);
+        telemetry.addData("lifted: ", lifted.state);
+        telemetry.addData("reset: ", reset.state);
         telemetry.addData("pixels: ", pixelsCollected);
         telemetry.addData("front pixel: ", frontSensorState);
         telemetry.addData("back pixel: ", backSensorState);
+        telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
+        telemetry.addData("right slide motor: ", rSlideMotor.getCurrentPosition());
     }
 
     @Override
