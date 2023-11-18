@@ -17,7 +17,6 @@ public class Intake extends AbstractSubsystem {
     BaoBao robot;
     public DcMotor intakeMotor;
     public Servo intakeServo;
-    public Toggle intake_toggle = new Toggle(false);
     public Intake(AbstractRobot robot, String intakeM, String intakeS) {
         super(robot);
         this.robot = (BaoBao) robot;
@@ -39,8 +38,8 @@ public class Intake extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        intakeMotor.setPower(robot.gamepad2.left_stick_y * .44);
-        double servoPower = -robot.gamepad2.left_stick_y * 0.5 + .5;
+        intakeMotor.setPower(-robot.gamepad2.left_stick_y * .5);
+        double servoPower = robot.gamepad2.left_stick_y * 0.5 + .5;
         intakeServo.setPosition(servoPower);
 
         robot.telemetry.addData("servo power: ", servoPower);

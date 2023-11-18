@@ -14,20 +14,15 @@ import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.opencv.core.Point;
 
-import java.io.IOException;
-import java.text.DecimalFormat;
-
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public SampleMecanumDrive drive;
-    private final Point[] JumpPoints = new Point[] {
-            new Point(0, 0),
+    private final Point[] MovementPoints = new Point[] {
+            new Point(0.25, 0),
             new Point(0, 1),
-            new Point(1, 0),
+            new Point(1, 0.1875),
             new Point(1, 1)
     };
-
-    VariantDegreeBezier vdbc = new VariantDegreeBezier(JumpPoints);
-
+    VariantDegreeBezier vdbc = new VariantDegreeBezier(MovementPoints);
     Curve[] curve = new Curve[]{vdbc};
     //public CurveSequence movementCurve, pivotCurve;
     public CurveSequence curveSequence = new CurveSequence(curve);
