@@ -23,7 +23,7 @@ public class Outtake extends AbstractSubsystem {
     public int[] slidesPos = new int[] {0, 100, 200, 300};
     public final int[] slidesBounds = new int[] {0, 1500};
     public final double[] releaseServoPos = new double[] {0, 0.2, 0.4, 0.58};
-    public final double[] tiltServoPos = new double[] {.9, .4, 0.1, 0.65};
+    public final double[] tiltServoPos = new double[] {.9, .6, 0.1, 0.45};
     private final Point[] TiltServoPoints = new Point[] {
             new Point(0, 0),
             new Point(0, .44),
@@ -37,14 +37,16 @@ public class Outtake extends AbstractSubsystem {
     public int pixelsCollected;
     public detected frontSensorState, backSensorState;
     public enum detected {
-        WHITE,
-        PURPLE,
-        GREEN,
-        YELLOW,
         PIXEL,
         NO_PIXEL
     }
-    public long startTimeStamp;
+    public enum color {
+        WHITE,
+        YELLOW,
+        PURPLE,
+        GREEN
+    }
+
     public Toggle released = new Toggle(false);
     public Toggle lifted = new Toggle(false);
     public Toggle reset = new Toggle(false);
@@ -119,10 +121,10 @@ public class Outtake extends AbstractSubsystem {
         if (frontSensor.getDistance(DistanceUnit.INCH) < .55) {frontSensorState = detected.PIXEL;}
         if (backSensor.getDistance(DistanceUnit.INCH) < .55) {backSensorState = detected.PIXEL;}
 
-        if (frontSensor.getDistance(DistanceUnit.INCH) > .55 && backSensor.getDistance(DistanceUnit.INCH) > .55) {
+        if (frontSensorState == detected.NO_PIXEL && backSensorState == detected.NO_PIXEL) {
             pixelsCollected = 0;
         }
-        if (frontSensor.getDistance(DistanceUnit.INCH) < .55 ^ backSensor.getDistance(DistanceUnit.INCH) < .55) {
+        if (frontSensorState == detected.PIXEL ^ backSensorState == detected.PIXEL) {
             pixelsCollected = 1;
         }
         else {
@@ -134,7 +136,7 @@ public class Outtake extends AbstractSubsystem {
         if (released.state && lifted.state) {
             fReleaseServo.setPosition(releaseServoPos[2]); // front up
             bReleaseServo.setPosition(releaseServoPos[1]); // back down
-            if (frontSensor.getDistance(DistanceUnit.INCH) > .55 || backSensor.getDistance(DistanceUnit.INCH) > .55) {
+            if (frontSensorState == detected.NO_PIXEL || backSensorState == detected.NO_PIXEL) {
                 fReleaseServo.setPosition(releaseServoPos[3]); // front down
                 bReleaseServo.setPosition(releaseServoPos[0]); // back up
                 released.state = false;
@@ -144,7 +146,7 @@ public class Outtake extends AbstractSubsystem {
         if (reset.state) {
             fReleaseServo.setPosition(releaseServoPos[2]);
             bReleaseServo.setPosition(releaseServoPos[0]);
-            if (frontSensor.getDistance(DistanceUnit.INCH) > .55 && backSensor.getDistance(DistanceUnit.INCH) > .55) {
+            if (frontSensorState == detected.NO_PIXEL && backSensorState == detected.NO_PIXEL) {
                 fReleaseServo.setPosition(releaseServoPos[3]);
                 reset.state = false;
                 released.state = false;
@@ -166,6 +168,7 @@ public class Outtake extends AbstractSubsystem {
         telemetry.addData("pixels: ", pixelsCollected);
         telemetry.addData("front pixel: ", frontSensorState);
         telemetry.addData("back pixel: ", backSensorState);
+        telemetry.addData("bump :", robot.gamepad2.left_bumper);
         telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
         telemetry.addData("right slide motor: ", rSlideMotor.getCurrentPosition());
     }

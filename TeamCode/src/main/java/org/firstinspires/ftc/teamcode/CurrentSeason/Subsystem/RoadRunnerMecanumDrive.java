@@ -17,7 +17,7 @@ import org.opencv.core.Point;
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public SampleMecanumDrive drive;
     private final Point[] MovementPoints = new Point[] {
-            new Point(0.25, 0),
+            new Point(0.125, 0),
             new Point(0, 1),
             new Point(1, 0.1875),
             new Point(1, 1)
@@ -51,6 +51,7 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
+        double speedMultiplier = (1 - robot.gamepad1.right_trigger) * 0.75 + 0.25;
 
         Vector2d input = new Vector2d(
                 robot.gamepad1.left_stick_y,
@@ -59,9 +60,9 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
 
         drive.setWeightedDrivePower(
                 new Pose2d(
-                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getX(), -1, 1))) * Math.signum(input.getX()),
-                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getY(), -1, 1))) * Math.signum(input.getY()),
-                        robot.gamepad1.right_stick_x//this.pivotCurve.evaluate((robot.gamepad1.right_stick_x - (pivotCurve.minX)) / (pivotCurve.maxX - pivotCurve.minX))
+                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getX(), -1, 1))) * Math.signum(input.getX()) * speedMultiplier,
+                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getY(), -1, 1))) * Math.signum(input.getY()) * speedMultiplier,
+                        this.curveSequence.evaluate(Math.abs(Range.clip(robot.gamepad1.right_stick_x, -1, 1))) * Math.signum(robot.gamepad1.right_stick_x) * speedMultiplier
                 )
         );
 
