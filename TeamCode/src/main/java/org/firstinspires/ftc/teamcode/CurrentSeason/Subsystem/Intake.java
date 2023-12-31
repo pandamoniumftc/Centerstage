@@ -16,13 +16,11 @@ import java.io.IOException;
 public class Intake extends AbstractSubsystem {
     BaoBao robot;
     public DcMotor intakeMotor;
-    public Servo intakeServo;
-    public Intake(AbstractRobot robot, String intakeM, String intakeS) {
+    public Intake(AbstractRobot robot, String intakeM) {
         super(robot);
         this.robot = (BaoBao) robot;
 
         intakeMotor = robot.hardwareMap.get(DcMotor.class, intakeM);
-        intakeServo = robot.hardwareMap.get(Servo.class, intakeS);
 
     }
 
@@ -38,9 +36,7 @@ public class Intake extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        intakeMotor.setPower(-robot.gamepad2.left_stick_y * .5);
-        double servoPower = robot.gamepad2.left_stick_y * 0.5 + .5;
-        intakeServo.setPosition(servoPower);
+        intakeMotor.setPower(-robot.gamepad2.left_stick_y * .8);
     }
 
     @Override
