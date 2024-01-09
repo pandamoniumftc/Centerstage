@@ -18,24 +18,14 @@ import org.opencv.core.Point;
 
 public class Outtake extends AbstractSubsystem {
     public DcMotor lSlideMotor, rSlideMotor;
-    public Servo lTiltServo, rTiltServo, releaseServo;
-    public ColorSensor backColorSensor, frontColorSensor;
-    public DistanceSensor backDistanceSensor, frontDistanceSensor;
-    public int[] slidesPos = new int[] {0, 500, 1000, 1500};
+    public Servo lTiltServo, rTiltServo, clawServo;
+    public ColorSensor leftColorSensor, rightColorSensor;
+    public DistanceSensor leftDistanceSensor, rightDistanceSensor;
+    public int[] slidesPos = new int[] {0, 500, 1000, 2000};
     public final int[] slidesBounds = new int[] {0, 2000};
-    public final double[] releaseServoPos = new double[] {1, 0.8};
-    public final double[] tiltServoPos = new double[] {.55, .25, 0.5, 0.85};
-    private final Point[] TiltServoPoints = new Point[] {
-            new Point(0, 0),
-            new Point(0, .44),
-            new Point(.25, 0.44),
-            new Point(.25, 0)
-    };
-    VariantDegreeBezier vdbc = new VariantDegreeBezier(TiltServoPoints);
-
-    Curve[] curve = new Curve[]{vdbc};
-    public CurveSequence TiltServoCurve;
-    public detected frontSensorState, backSensorState;
+    public final double[] clawServoPos = new double[] {0, 1};
+    public final double[] tiltServoPos = new double[] {1, .4, 0, 0.6};
+    public detected leftSensorState, rightSensorState;
     public PIDFController slidesController = new PIDFController(1, 0, 0, 1);
     public enum detected {
         WHITE_PIXEL,
@@ -52,7 +42,7 @@ public class Outtake extends AbstractSubsystem {
     public Toggle firstLevel = new Toggle(false);
     public Toggle secondLevel = new Toggle(false);
     public Toggle thirdLevel = new Toggle(false);
-    public Outtake(AbstractRobot robot, String lsm, String rsm, String lts, String rts, String rs, String fSensor, String bSensor/*, CurveSequence slidePowerCurve*/) {
+    public Outtake(AbstractRobot robot, String lsm, String rsm, String lts, String rts, String rs, String lSensor, String rSensor) {
         super(robot);
 
         lSlideMotor = robot.hardwareMap.get(DcMotor.class, lsm);
@@ -60,23 +50,21 @@ public class Outtake extends AbstractSubsystem {
 
         lTiltServo = robot.hardwareMap.get(Servo.class, lts);
         rTiltServo = robot.hardwareMap.get(Servo.class, rts);
-        releaseServo = robot.hardwareMap.get(Servo.class, rs);
+        //clawServo = robot.hardwareMap.get(Servo.class, rs);
 
-        frontColorSensor = robot.hardwareMap.get(ColorSensor.class, fSensor);
-        backColorSensor = robot.hardwareMap.get(ColorSensor.class, bSensor);
+        leftColorSensor = robot.hardwareMap.get(ColorSensor.class, lSensor);
+        rightColorSensor = robot.hardwareMap.get(ColorSensor.class, rSensor);
 
-        frontDistanceSensor = robot.hardwareMap.get(DistanceSensor.class, fSensor);
-        backDistanceSensor = robot.hardwareMap.get(DistanceSensor.class, bSensor);
+        leftDistanceSensor = robot.hardwareMap.get(DistanceSensor.class, lSensor);
+        rightDistanceSensor = robot.hardwareMap.get(DistanceSensor.class, rSensor);
 
         lSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        this.TiltServoCurve = new CurveSequence(curve);
     }
 
     @Override
     public void init() {
-        rSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        lSlideMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         lSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lTiltServo.setDirection(Servo.Direction.REVERSE);
@@ -135,24 +123,23 @@ public class Outtake extends AbstractSubsystem {
         lTiltServo.setPosition(tiltServoPos[lifted.state ? 0 : 1]);
         rTiltServo.setPosition(tiltServoPos[lifted.state ? 2 : 3]);
 
-        releaseServo.setPosition(releaseServoPos[released.state ? 1 : 0]);
+        //clawServo.setPosition(clawServoPos[released.state ? 1 : 0]);
 
         // keeps track of pixels collected in outtake
 
-        if (frontDistanceSensor.getDistance(DistanceUnit.INCH) > .50) {frontSensorState = detected.NO_PIXEL;}
-        else {frontSensorState = detected.PIXEL;}
-        if (backDistanceSensor.getDistance(DistanceUnit.INCH) > .40) {backSensorState = detected.NO_PIXEL;}
-        else {backSensorState = detected.PIXEL;}
+        if (leftDistanceSensor.getDistance(DistanceUnit.INCH) > .1) {leftSensorState = detected.NO_PIXEL;}
+        else {leftSensorState = detected.PIXEL;}
+        if (rightDistanceSensor.getDistance(DistanceUnit.INCH) > .1) {rightSensorState = detected.NO_PIXEL;}
+        else {rightSensorState = detected.PIXEL;}
 
         // function to deposit pixel
 
-
         telemetry.addData("released: ", released.state);
         telemetry.addData("lifted: ", lifted.state);
-        telemetry.addData("front pixel: ", frontSensorState);
-        telemetry.addData("back pixel: ", backSensorState);
-        telemetry.addData("front dis: ", frontDistanceSensor.getDistance(DistanceUnit.INCH));
-        telemetry.addData("back dis: ", backDistanceSensor.getDistance(DistanceUnit.INCH));
+        telemetry.addData("front pixel: ", leftSensorState);
+        telemetry.addData("back pixel: ", rightSensorState);
+        telemetry.addData("front dis: ", leftDistanceSensor.getDistance(DistanceUnit.INCH));
+        telemetry.addData("back dis: ", rightDistanceSensor.getDistance(DistanceUnit.INCH));
         telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
         telemetry.addData("right slide motor: ", rSlideMotor.getCurrentPosition());
     }

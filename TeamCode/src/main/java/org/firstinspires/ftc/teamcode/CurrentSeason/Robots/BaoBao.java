@@ -8,13 +8,13 @@ import org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem.RoadRunnerMecanumDrive;
 
 public class BaoBao extends AbstractRobot {
-    public RoadRunnerMecanumDrive drive;
+    public RoadRunnerMecanumDrive mecanum;
     public Intake intake;
     public Outtake outtake;
     public BaoBao(OpMode opMode) {
         super(opMode);
-        drive = new RoadRunnerMecanumDrive(this);
+        mecanum = new RoadRunnerMecanumDrive(this);
         outtake = new Outtake(this, "lsm", "rsm", "lts", "rts", "rs", "fSensor", "bSensor");
-        intake = new Intake(this, "intakeM");
+        intake = new Intake(this, "intakeM", "rs");
     }
 }

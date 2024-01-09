@@ -16,12 +16,13 @@ import java.io.IOException;
 public class Intake extends AbstractSubsystem {
     BaoBao robot;
     public DcMotor intakeMotor;
-    public Intake(AbstractRobot robot, String intakeM) {
+
+
+    public Intake(AbstractRobot robot, String intakeM , String rs) {
         super(robot);
         this.robot = (BaoBao) robot;
 
         intakeMotor = robot.hardwareMap.get(DcMotor.class, intakeM);
-
     }
 
     @Override

@@ -60,9 +60,9 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
 
         drive.setWeightedDrivePower(
                 new Pose2d(
-                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getX(), -1, 1))) * Math.signum(input.getX()) * speedMultiplier,
-                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getY(), -1, 1))) * Math.signum(input.getY()) * speedMultiplier,
-                        this.curveSequence.evaluate(Math.abs(Range.clip(robot.gamepad1.right_stick_x, -1, 1))) * Math.signum(robot.gamepad1.right_stick_x) * speedMultiplier
+                        (this.curveSequence.evaluate(Math.abs(Range.clip(input.getX(), -1, 1))) * Math.signum(input.getX()) + Math.max(0, input.getX() - 1.0)) * speedMultiplier,
+                        (this.curveSequence.evaluate(Math.abs(Range.clip(input.getY(), -1, 1))) * Math.signum(input.getY()) + Math.max(0, input.getY() - 1.0)) * speedMultiplier,
+                        (this.curveSequence.evaluate(Math.abs(Range.clip(robot.gamepad1.right_stick_x, -1, 1))) * Math.signum(robot.gamepad1.right_stick_x) + Math.max(0, robot.gamepad1.right_stick_x - 1.0)) * speedMultiplier
                 )
         );
 

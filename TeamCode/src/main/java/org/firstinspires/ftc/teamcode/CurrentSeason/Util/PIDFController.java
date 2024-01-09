@@ -20,7 +20,7 @@ public class PIDFController {
 
     public double calculate(double current, double target, double feedForward){
 
-        double error = current - target;
+        double error = target - current;
         double dt = firstFrame ? 0 : (System.nanoTime() - prevTime) * 1E-9;
 
         P = error * Kp;
