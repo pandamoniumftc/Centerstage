@@ -8,6 +8,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import org.openftc.easyopencv.OpenCvPipeline;
@@ -17,13 +18,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class TeamElementPipeline extends OpenCvPipeline {
-
-    int[] pixelIndicatorMin = new int[] {0, 0, 0};
-    int[] pixelIndicatorMax = new int[] {255, 255, 255};
-    int[] redTeamElementMin = new int[] {0, 0, 0};
-    int[] redTeamElementMax = new int[] {255, 255, 255};
-    int[] blueTeamElementMin = new int[] {0, 0, 0};
-    int[] blueTeamElementMax = new int[] {255, 255, 255};
+    int[] redTeamElementMin = new int[] {0, 160, 0};
+    int[] redTeamElementMax = new int[] {200, 255, 120};
+    int[] blueTeamElementMin = new int[] {0, 0, 120};
+    int[] blueTeamElementMax = new int[] {200, 120, 255};
 
     public enum objectLocation {
         LEFT(-20),
@@ -42,34 +40,28 @@ public class TeamElementPipeline extends OpenCvPipeline {
 
     @Override
     public Mat processFrame(Mat img) {
-        //Imgproc.resize(img, img, );
+        Imgproc.resize(img, img, new Size(80, (int) Math.round((80 / img.size().width) * img.size().height)));
 
         Mat kernel = Mat.ones(5, 5, CvType.CV_32F);
-        Mat pixelIndicator = new Mat();
         Mat redTeamElement = new Mat();
         Mat blueTeamElement = new Mat();
         Mat object = new Mat();
-
-        Core.inRange(img, new Scalar(pixelIndicatorMin[0], pixelIndicatorMin[1], pixelIndicatorMin[2]), new Scalar(pixelIndicatorMax[0], pixelIndicatorMax[1], pixelIndicatorMax[2]), pixelIndicator);
 
         Imgproc.cvtColor(object, object, Imgproc.COLOR_RGB2YCrCb);
 
         Core.inRange(img, new Scalar(redTeamElementMin[0], redTeamElementMin[1], redTeamElementMin[2]), new Scalar(redTeamElementMax[0], redTeamElementMax[1], redTeamElementMax[2]), redTeamElement);
         Core.inRange(img, new Scalar(blueTeamElementMin[0], blueTeamElementMin[1], blueTeamElementMin[2]), new Scalar(blueTeamElementMax[0], blueTeamElementMax[1], blueTeamElementMax[2]), blueTeamElement);
 
-        Imgproc.morphologyEx(pixelIndicator, pixelIndicator, Imgproc.MORPH_CLOSE, kernel);
-        Imgproc.morphologyEx(pixelIndicator, pixelIndicator, Imgproc.MORPH_CLOSE, kernel);
-        Imgproc.morphologyEx(pixelIndicator, pixelIndicator, Imgproc.MORPH_CLOSE, kernel);
+        Imgproc.morphologyEx(object, object, Imgproc.MORPH_CLOSE, kernel);
 
-        Core.bitwise_or(pixelIndicator, redTeamElement, object);
-        Core.bitwise_or(object, blueTeamElement, object);
+        Core.bitwise_or(redTeamElement, blueTeamElement, object);
 
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
         MatOfPoint2f approx = new MatOfPoint2f();
 
-        Imgproc.cvtColor(object, object, Imgproc.COLOR_YCrCb2BGR);
-        Imgproc.cvtColor(object, object, Imgproc.COLOR_RGB2GRAY);
+        Imgproc.cvtColor(img, img, Imgproc.COLOR_YCrCb2BGR);
+        Imgproc.cvtColor(img, img, Imgproc.COLOR_RGB2GRAY);
 
         Imgproc.findContours(object, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
@@ -90,12 +82,17 @@ public class TeamElementPipeline extends OpenCvPipeline {
                 centroid.x = Math.round(moments.get_m10() / moments.get_m00());
                 centroid.y = Math.round(moments.get_m01() / moments.get_m00());
 
+                Imgproc.circle(img, new Point(centroid.x, centroid.y), 3, new Scalar(255, 255, 255));
+
                 if (centroid.x > imgCenter.x) {location = objectLocation.LEFT;}
                 if (centroid.x < imgCenter.x) {location = objectLocation.RIGHT;}
                 else {location = objectLocation.MIDDLE;}
             }
 
         }
+
+        Imgproc.cvtColor(img, img, Imgproc.COLOR_GRAY2BGR);
+
 
         return img;
     }

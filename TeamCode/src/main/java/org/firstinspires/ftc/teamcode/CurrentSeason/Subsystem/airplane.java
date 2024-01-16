@@ -4,12 +4,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractSubsystem;
+import org.firstinspires.ftc.teamcode.CurrentSeason.Util.Toggle;
 
 import java.io.IOException;
 
 public class airplane extends AbstractSubsystem {
     Servo airplaneservo;
-    double [] servoposition = new double[] {0 , 1};
+    Toggle release = new Toggle(false);
+    double [] servoposition = new double[] {0.05 , 0};
     public airplane(AbstractRobot robot, String as) {
         super(robot);
         airplaneservo = robot.hardwareMap.get(Servo.class, as);
@@ -27,7 +29,8 @@ public class airplane extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        airplaneservo.setPosition(robot.gamepad2.a ? servoposition[1]:servoposition[0]);
+        release.updateState(robot.gamepad2.a);
+        airplaneservo.setPosition(servoposition[release.state ? 1 : 0]);
     }
 
     @Override

@@ -67,7 +67,7 @@ public class AprilTagDetectionAuto extends AbstractAutonomous {
             }
             public void onError(int errorCode) {
                 /*
-                 * This will be called if the camera could not be opened
+                 * This will be called if the slidesCamera could not be opened
                  */
             }
         });

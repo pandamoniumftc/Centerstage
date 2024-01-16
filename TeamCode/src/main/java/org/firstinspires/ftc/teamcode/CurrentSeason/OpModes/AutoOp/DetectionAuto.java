@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.CurrentSeason.OpModes.AutoOp;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractAutonomous;
@@ -11,39 +12,47 @@ import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.BaoBao;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
-
-public class BlueDetectionAuto extends AbstractAutonomous {
+@Autonomous (name="detect auto")
+public class DetectionAuto extends AbstractAutonomous {
     BaoBao robot;
-    OpenCvCamera camera;
+    OpenCvCamera slidesCamera;
     Trajectory forward;
     Trajectory left;
     Trajectory right;
+
+
+
     @Override
     public void onInit() {
-        int cameraMonitorViewId = robot.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", robot.hardwareMap.appContext.getPackageName());
+        /*int cameraMonitorViewId = robot.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", robot.hardwareMap.appContext.getPackageName());
 
-        camera = OpenCvCameraFactory.getInstance().createWebcam(robot.hardwareMap.get(WebcamName.class, "Cam"), cameraMonitorViewId);
+        slidesCamera = OpenCvCameraFactory.getInstance().createWebcam(robot.hardwareMap.get(WebcamName.class, "Cam"), cameraMonitorViewId);
 
         //set pipeline
-        camera.setPipeline(new TeamElementPipeline());
+        slidesCamera.setPipeline(new TeamElementPipeline());
 
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        slidesCamera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
             @Override
             public void onOpened() {
-                camera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                slidesCamera.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
             }
             public void onError(int errorCode) {
                 /*
-                 * This will be called if the camera could not be opened
-                 */
+                 * This will be called if the slidesCamera could not be opened
+
             }
-        });
+        });*/
+
+        Pose2d startPos = new Pose2d(65, 12, Math.toRadians(0));
+
+        robot.mecanum.drive.setPoseEstimate(startPos);
+
     }
     @Override
     public void autonomous() {
         forward = robot.mecanum.drive.trajectoryBuilder(new Pose2d())
-                .forward(20)
+                .strafeLeft(20)
                 .build();
         left = robot.mecanum.drive.trajectoryBuilder(forward.end())
                 .strafeLeft(20)
@@ -52,18 +61,20 @@ public class BlueDetectionAuto extends AbstractAutonomous {
                 .strafeRight(20)
                 .build();
 
-        camera.setPipeline(new TeamElementPipeline());
+        //slidesCamera.setPipeline(new TeamElementPipeline());
 
         waitForStart();
 
         if (opModeIsActive()) {
 
+            robot.mecanum.drive.followTrajectory(forward);
+
             TeamElementPipeline.objectLocation location = TeamElementPipeline.location;
 
-            if (TeamElementPipeline.location == TeamElementPipeline.objectLocation.MIDDLE) {
+            if (location == TeamElementPipeline.objectLocation.MIDDLE) {
                 robot.mecanum.drive.followTrajectory(forward);
             }
-            else if (TeamElementPipeline.location == TeamElementPipeline.objectLocation.LEFT) {
+            else if (location == TeamElementPipeline.objectLocation.LEFT) {
                 robot.mecanum.drive.followTrajectory(forward);
                 robot.mecanum.drive.followTrajectory(left);
             }
@@ -78,6 +89,7 @@ public class BlueDetectionAuto extends AbstractAutonomous {
 
     @Override
     public AbstractRobot instantiateRobot() {
-        return null;
+        robot = new BaoBao(this);
+        return robot;
     }
 }

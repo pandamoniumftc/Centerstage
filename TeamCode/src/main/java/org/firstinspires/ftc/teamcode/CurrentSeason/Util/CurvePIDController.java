@@ -9,7 +9,6 @@ import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
 public class CurvePIDController {
     public VariantDegreeBezier Cp, Ci, Cd;
 
-
     private double target;
     private double angle;
     public double error;

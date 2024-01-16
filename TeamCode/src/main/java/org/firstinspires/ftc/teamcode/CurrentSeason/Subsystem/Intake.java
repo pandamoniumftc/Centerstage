@@ -18,7 +18,7 @@ public class Intake extends AbstractSubsystem {
     public DcMotor intakeMotor;
 
 
-    public Intake(AbstractRobot robot, String intakeM , String rs) {
+    public Intake(AbstractRobot robot, String intakeM) {
         super(robot);
         this.robot = (BaoBao) robot;
 
@@ -37,7 +37,12 @@ public class Intake extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        intakeMotor.setPower(-robot.gamepad2.left_stick_y * .8);
+        if (Math.abs(robot.gamepad2.left_stick_y) > 0.5) {
+            robot.state = BaoBao.robotState.INTAKING;
+        }
+        if (robot.state == BaoBao.robotState.INTAKING) {
+            intakeMotor.setPower(-robot.gamepad2.left_stick_y);
+        }
     }
 
     @Override
