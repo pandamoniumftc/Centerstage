@@ -26,7 +26,7 @@ public class BaoBao extends AbstractRobot {
     public BaoBao(OpMode opMode) {
         super(opMode);
         mecanum = new RoadRunnerMecanumDrive(this);
-        outtake = new Outtake(this, "lsm", "rsm", "lts", "rts", "ps", "rs", "lSensor", "rSensor");
+        outtake = new Outtake(this, "lsm", "rsm", "ps", "lSensor", "rSensor", "cs1", "cs2");
         intake = new Intake(this, "intakeM");
         airplane = new airplane(this, "as");
     }

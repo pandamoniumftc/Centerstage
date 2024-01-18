@@ -16,9 +16,10 @@ import org.firstinspires.ftc.teamcode.CurrentSeason.Util.Toggle;
 public class Outtake extends AbstractSubsystem {
     BaoBao robot;
     public DcMotor lSlideMotor, rSlideMotor;
-    public Servo lTiltServo, rTiltServo, pivotServo, clawServo;
+    public Servo pivotServo, clawServo1 , clawServo2;
     public ColorSensor leftColorSensor, rightColorSensor;
     public DistanceSensor leftDistanceSensor, rightDistanceSensor;
+
     public int[] slidesPos = new int[] {
             /* default pos */ 0,
             /* first level */ 500,
@@ -27,9 +28,7 @@ public class Outtake extends AbstractSubsystem {
     public final int[] slidesBounds = new int[] {
             /* min */ 0,
             /* max */ 2000};
-    public final double[] clawServoPos = new double[] {
-            /* closed */ .6,
-            /* opened */ .2};
+    double [] servoposition = new double[] {0.25 , 0 , 1 , 2};
     public final double[] tiltServoPos = new double[] {
             /* left, grabbing pos */ 0,
             /* left, default pos */ .1,
@@ -61,17 +60,17 @@ public class Outtake extends AbstractSubsystem {
     public Toggle goToBottomLine = new Toggle(false);
     public Toggle goToMiddleLine = new Toggle(false);
     public Toggle goToTopLine = new Toggle(false);
-    public Outtake(AbstractRobot robot, String lsm, String rsm, String lts, String rts, String ps, String rs, String lSensor, String rSensor) {
+    public Outtake(AbstractRobot robot, String lsm, String rsm, String ps, String lSensor, String rSensor, String cs1 , String cs2) {
         super(robot);
         this.robot = (BaoBao)robot;
 
         lSlideMotor = robot.hardwareMap.get(DcMotor.class, lsm);
         rSlideMotor = robot.hardwareMap.get(DcMotor.class, rsm);
 
-        lTiltServo = robot.hardwareMap.get(Servo.class, lts);
-        rTiltServo = robot.hardwareMap.get(Servo.class, rts);
         pivotServo = robot.hardwareMap.get(Servo.class, ps);
-        clawServo = robot.hardwareMap.get(Servo.class, rs);
+
+        clawServo1 = robot.hardwareMap.get(Servo.class, cs1);
+        clawServo2 = robot.hardwareMap.get(Servo.class, cs2);
 
         leftColorSensor = robot.hardwareMap.get(ColorSensor.class, lSensor);
         rightColorSensor = robot.hardwareMap.get(ColorSensor.class, rSensor);
@@ -91,12 +90,6 @@ public class Outtake extends AbstractSubsystem {
         lSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        lTiltServo.setDirection(Servo.Direction.REVERSE);
-        rTiltServo.setDirection(Servo.Direction.REVERSE);
-
-        lTiltServo.setPosition(tiltServoPos[1]);
-        rTiltServo.setPosition(tiltServoPos[4]);
-        clawServo.setPosition(clawServoPos[1]);
         pivotServo.setPosition(pivotServoPos[0]);
         robot.state = BaoBao.robotState.NEUTRAL;
     }
@@ -155,54 +148,13 @@ public class Outtake extends AbstractSubsystem {
         x.updateState(robot.gamepad2.x);
         y.updateState(robot.gamepad2.y);
 
-        if (pivot.state) {
-            lTiltServo.setPosition(tiltServoPos[0]);
-            rTiltServo.setPosition(tiltServoPos[3]);
-            pivotServo.setPosition(pivotServoPos[1]);
-            robot.state = BaoBao.robotState.WAITING_TO_GRAB;
-            if (!opened.state) {
-                clawServo.setPosition(clawServoPos[0]);
-                robot.state = BaoBao.robotState.GRABBED_PIXEL;
-            }
-        }
-        if (robot.state == BaoBao.robotState.GRABBED_PIXEL && x.state) {
-            pivot.state = false;
-            lTiltServo.setPosition(tiltServoPos[1]);
-            rTiltServo.setPosition(tiltServoPos[4]);
-            pivotServo.setPosition(pivotServoPos[0]);
-        }
-        if (y.state) {
-            x.state = false;
-            lTiltServo.setPosition(tiltServoPos[1] + .1);
-            rTiltServo.setPosition(tiltServoPos[4] - .1);
-            pivotServo.setPosition(pivotServoPos[0] - 0.12);
-        }
-        if (lifted.state) {
-            y.state = false;
-            lTiltServo.setPosition(tiltServoPos[2]);
-            rTiltServo.setPosition(tiltServoPos[5]);
-            robot.state = BaoBao.robotState.WAITING_TO_DEPOSIT;
-        }
-
-        if (robot.state == BaoBao.robotState.WAITING_TO_DEPOSIT) {
-            pivot.state = false;
-            pivotServo.setPosition(pivotServoPos[2]);
-            if (opened.state) {
-                clawServo.setPosition(clawServoPos[1]);
-                robot.state = BaoBao.robotState.DEPOSITED;
-            }
-        }
-        if (robot.state == BaoBao.robotState.DEPOSITED && !lifted.state) {
-            lTiltServo.setPosition(tiltServoPos[1]);
-            rTiltServo.setPosition(tiltServoPos[4]);
-            pivotServo.setPosition(pivotServoPos[0]);
-            robot.state = BaoBao.robotState.NEUTRAL;
-        }
 
         //lTiltServo.setPosition(tiltServoPos[lifted.state ? 2 : 0]);
         //rTiltServo.setPosition(tiltServoPos[lifted.state ? 5 : 3]);
         //clawServo.setPosition(clawServoPos[opened.state ? 1 : 0]);
         //pivotServo.setPosition(pivotServoPos[pivot.state ? 1 : 0]);
+        clawServo1.setPosition(servoposition[opened.state ? 1 : 0]);
+        clawServo2.setPosition(servoposition[opened.state ? 2 : 3 ]);
 
         // keeps track of pixels collected in outtake
 
