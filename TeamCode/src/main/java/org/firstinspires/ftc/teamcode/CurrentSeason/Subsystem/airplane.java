@@ -14,7 +14,7 @@ public class airplane extends AbstractSubsystem {
     double [] servoposition = new double[] {0.05 , 0};
     public airplane(AbstractRobot robot, String as) {
         super(robot);
-        airplaneservo = robot.hardwareMap.get(Servo.class, as);
+        //airplaneservo = robot.hardwareMap.get(Servo.class, as);
     }
 
     @Override
@@ -29,8 +29,8 @@ public class airplane extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        release.updateState(robot.gamepad2.a);
-        airplaneservo.setPosition(servoposition[release.state ? 1 : 0]);
+        //release.updateState(robot.gamepad2.a);
+        //airplaneservo.setPosition(servoposition[release.state ? 1 : 0]);
     }
 
     @Override

@@ -5,36 +5,30 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractSubsystem;
-import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.BaoBao;
+import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.Po;
+import org.firstinspires.ftc.teamcode.CurrentSeason.Util.Toggle;
 import org.firstinspires.ftc.teamcode.CurvesPort.Curve;
 import org.firstinspires.ftc.teamcode.CurvesPort.CurveSequence;
 import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.StandardTrackingWheelLocalizer;
 import org.opencv.core.Point;
 
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
+    Po robot;
     public SampleMecanumDrive drive;
-    private final Point[] MovementPoints = new Point[] {
-            new Point(0.125, 0),
-            new Point(0, 1),
-            new Point(1, 0.1875),
-            new Point(1, 1)
-    };
-    VariantDegreeBezier vdbc = new VariantDegreeBezier(MovementPoints);
-    Curve[] curve = new Curve[]{vdbc};
-    public CurveSequence curveSequence = new CurveSequence(curve);
+    public CurveSequence MovementProfile;
+    Toggle isFieldCentric = new Toggle(true);
+    Toggle acceleration = new Toggle(true);
 
-    /*
-    flm = control hub, port 3
-    frm = expansion hub, port 0
-    blm = control hub, port 2
-    brm = expansion hub, port 1
-     */
-
-    public RoadRunnerMecanumDrive(AbstractRobot robot) {
+    public RoadRunnerMecanumDrive(AbstractRobot robot, Point[] MovementCurve) {
         super(robot);
+        this.robot = (Po) robot;
+
+        this.MovementProfile = CurveSequence.init(MovementCurve);
     }
 
     @Override
@@ -52,18 +46,41 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     public void driverLoop() {
         double speedMultiplier = (1 - robot.gamepad1.right_trigger) * 0.75 + 0.25;
 
-        Vector2d input = new Vector2d(
-                robot.gamepad1.left_stick_y,
-                robot.gamepad1.left_stick_x
-        ).rotated(-drive.getPoseEstimate().getHeading()); //field centric
+        isFieldCentric.updateState(robot.gamepad1.left_stick_button);
+        acceleration.updateState(robot.gamepad1.right_stick_button);
 
-        drive.setWeightedDrivePower(
-                new Pose2d(
-                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getX(), -1, 1))) * Math.signum(input.getX()) * speedMultiplier,
-                        this.curveSequence.evaluate(Math.abs(Range.clip(input.getY(), -1, 1))) * Math.signum(input.getY())  * speedMultiplier,
-                        this.curveSequence.evaluate(Math.abs(Range.clip(robot.gamepad1.right_stick_x, -1, 1))) * Math.signum(robot.gamepad1.right_stick_x) * speedMultiplier
-                )
-        );
+        Vector2d input;
+
+        if (isFieldCentric.state) {
+            input = new Vector2d(
+                    -robot.gamepad1.left_stick_y,
+                    -robot.gamepad1.left_stick_x
+            ).rotated(-drive.getPoseEstimate().getHeading()); //field centric
+        }
+        else {
+            input = new Vector2d(
+                    -robot.gamepad1.left_stick_y,
+                    -robot.gamepad1.left_stick_x
+            );
+        }
+
+        if (acceleration.state) {
+            drive.setWeightedDrivePower(
+                    new Pose2d(
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(input.getX(), -1.0, 1.0))) * Math.signum(input.getX()) * speedMultiplier,
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(input.getY(), -1.0, 1.0))) * Math.signum(input.getY())  * speedMultiplier,
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(-robot.gamepad1.right_stick_x, -1.0, 1.0))) * Math.signum(-robot.gamepad1.right_stick_x) * speedMultiplier
+                    )
+            );
+        }
+        else {
+            drive.setWeightedDrivePower(
+                    new Pose2d(
+                            -input.getX() * speedMultiplier,
+                            -input.getY() * speedMultiplier,
+                            -robot.gamepad1.right_stick_x * speedMultiplier)
+            );
+        }
 
         drive.update();
 
@@ -72,11 +89,9 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
         telemetry.addData("x: ", currentPos.getX());
         telemetry.addData("y: ", currentPos.getY());
         telemetry.addData("c: ", currentPos.getHeading());
-        telemetry.addData("left x: ", robot.gamepad1.left_stick_x);
-        telemetry.addData("left y: ", robot.gamepad1.left_stick_y);
-        telemetry.addData("right x: ", robot.gamepad1.right_stick_x);
-        telemetry.addData("right y: ", robot.gamepad1.right_stick_y);
-
+        telemetry.addData("left: ", drive.leftRear.getCurrentPosition());
+        telemetry.addData("right: ", drive.rightFront.getCurrentPosition());
+        telemetry.addData("front: ", drive.leftFront.getCurrentPosition());
     }
 
     @Override

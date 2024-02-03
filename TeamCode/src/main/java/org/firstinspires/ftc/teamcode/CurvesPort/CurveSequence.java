@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.CurvesPort;
 
+import org.opencv.core.Point;
+
 public class CurveSequence {
 
     public Curve[] curves;
@@ -22,6 +24,13 @@ public class CurveSequence {
 
         this.length = this.maxX - this.minX;
         System.out.println("minX: " + this.minX + ", maxX: " + this.maxX + ", length: " + this.length);
+    }
+
+    public static CurveSequence init(Point[] points) {
+        VariantDegreeBezier vdbc = new VariantDegreeBezier(points);
+        Curve[] curve = new Curve[] {vdbc};
+
+        return new CurveSequence(curve);
     }
 
     public double evaluate(double t) {

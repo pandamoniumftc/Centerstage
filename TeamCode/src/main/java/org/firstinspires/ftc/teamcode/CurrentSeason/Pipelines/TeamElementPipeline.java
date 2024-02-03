@@ -18,11 +18,11 @@ import java.util.HashMap;
 import java.util.List;
 
 public class TeamElementPipeline extends OpenCvPipeline {
-    int[] redTeamElementMin = new int[] {0, 160, 0};
-    int[] redTeamElementMax = new int[] {200, 255, 120};
-    int[] blueTeamElementMin = new int[] {0, 0, 120};
-    int[] blueTeamElementMax = new int[] {200, 120, 255};
-
+    boolean viewportPaused;
+    public static int[] redTeamElementMin = new int[] {0, 0, 120};
+    public static int[] redTeamElementMax = new int[] {150, 100, 255};
+    public static int[] blueTeamElementMin = new int[] {0, 0, 120};
+    public static int[] blueTeamElementMax = new int[] {200, 124, 255};
     public enum objectLocation {
         LEFT(-20),
         MIDDLE(0),
@@ -35,65 +35,105 @@ public class TeamElementPipeline extends OpenCvPipeline {
         public int getOffset() { return offset; }
 
     }
-
+    public boolean isRedSide;
     public static objectLocation location = objectLocation.MIDDLE;
 
     @Override
     public Mat processFrame(Mat img) {
-        Imgproc.resize(img, img, new Size(80, (int) Math.round((80 / img.size().width) * img.size().height)));
-
-        Mat kernel = Mat.ones(5, 5, CvType.CV_32F);
+        Imgproc.resize(img, img, new Size(80, (int) Math.round((640 / img.size().width) * img.size().height)));
         Mat redTeamElement = new Mat();
         Mat blueTeamElement = new Mat();
         Mat object = new Mat();
 
-        Imgproc.cvtColor(object, object, Imgproc.COLOR_RGB2YCrCb);
-
         Core.inRange(img, new Scalar(redTeamElementMin[0], redTeamElementMin[1], redTeamElementMin[2]), new Scalar(redTeamElementMax[0], redTeamElementMax[1], redTeamElementMax[2]), redTeamElement);
         Core.inRange(img, new Scalar(blueTeamElementMin[0], blueTeamElementMin[1], blueTeamElementMin[2]), new Scalar(blueTeamElementMax[0], blueTeamElementMax[1], blueTeamElementMax[2]), blueTeamElement);
 
-        Imgproc.morphologyEx(object, object, Imgproc.MORPH_CLOSE, kernel);
-
         Core.bitwise_or(redTeamElement, blueTeamElement, object);
 
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        MatOfPoint2f approx = new MatOfPoint2f();
+        System.out.println(blueTeamElement.size());
 
-        Imgproc.cvtColor(img, img, Imgproc.COLOR_YCrCb2BGR);
-        Imgproc.cvtColor(img, img, Imgproc.COLOR_RGB2GRAY);
+        Mat kernel = Mat.ones(3, 3, CvType.CV_32F);
+        Imgproc.morphologyEx(object, redTeamElement, Imgproc.MORPH_OPEN, kernel);
 
-        Imgproc.findContours(object, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+        Mat[] roi = new Mat[] {
+                object.submat(new Rect(0, img.height() / 3, img.width() / 4, img.height() * 2 / 3)),
+                object.submat(new Rect(img.width() / 4, img.height() / 3, img.width() / 2, img.height() / 3)),
+                object.submat(new Rect(img.width() * 3 / 4, img.height() / 3, img.width() / 4, img.height() * 2 / 3))
+        };
 
-        final Point imgCenter = new Point(Math.round(img.width() / 2.0), Math.round(img.height() / 2.0));
-        Point centroid = new Point();
+        double left = 0, middle = 0, right = 0;
 
-        for (int i = 0; i < contours.size(); i++) {
-
-            double peri = Imgproc.arcLength(new MatOfPoint2f(contours.get(i).toArray()), true);
-
-            double contoursArea = Imgproc.contourArea(contours.get(i));
-
-            Imgproc.approxPolyDP(new MatOfPoint2f(contours.get(i).toArray()), approx, 0.01 * peri, true);
-
-            if (contoursArea > 500 && contoursArea < 50000) {
-
-                final Moments moments = Imgproc.moments(approx);
-                centroid.x = Math.round(moments.get_m10() / moments.get_m00());
-                centroid.y = Math.round(moments.get_m01() / moments.get_m00());
-
-                Imgproc.circle(img, new Point(centroid.x, centroid.y), 3, new Scalar(255, 255, 255));
-
-                if (centroid.x > imgCenter.x) {location = objectLocation.LEFT;}
-                if (centroid.x < imgCenter.x) {location = objectLocation.RIGHT;}
-                else {location = objectLocation.MIDDLE;}
+        for (int i = 0; i < roi[0].width(); i++) {
+            for (int j = 0; j < roi[0].height(); j++) {
+                if (roi[0].get(i, j) != null) {
+                    left += roi[0].get(i, j)[0];
+                }
             }
-
         }
 
-        Imgproc.cvtColor(img, img, Imgproc.COLOR_GRAY2BGR);
+        for (int i = 0; i < roi[1].width(); i++) {
+            for (int j = 0; j < roi[1].height(); j++) {
+                if (roi[1].get(i, j) != null) {
+                    middle += roi[1].get(i, j)[0];
+                }
+            }
+        }
 
+        for (int i = 0; i < roi[2].width(); i++) {
+            for (int j = 0; j < roi[2].height(); j++) {
+                if (roi[2].get(i, j) != null) {
+                    right += roi[2].get(i, j)[0];
+                }
+            }
+        }
+
+        Imgproc.putText(img, location.toString(), new Point(0, 20), Imgproc.FONT_HERSHEY_COMPLEX, 1, new Scalar(255, 255, 255), 1);
+
+        Imgproc.rectangle(img, new Rect(0, img.height() / 3, img.width() / 4, img.height() * 2 / 3), new Scalar(0, 0, 0), 3);
+        Imgproc.rectangle(img, new Rect(img.width() / 4, img.height() / 3, img.width() / 2, img.height() / 3), new Scalar(0, 0, 0), 3);
+        Imgproc.rectangle(img, new Rect(img.width() * 3 / 4, img.height() / 3, img.width() / 4, img.height() * 2 / 3), new Scalar(0, 0, 0), 3);
+
+        if (left > middle && left > right) {
+            location = objectLocation.LEFT;
+        }
+
+        if (middle > left && middle > right) {
+            location = objectLocation.MIDDLE;
+        }
+
+        if (right > middle && right > left) {
+            location = objectLocation.RIGHT;
+        }
 
         return img;
+
     }
+
+    @Override
+    public void onViewportTapped()
+    {
+        /*
+         * The viewport (if one was specified in the constructor) can also be dynamically "paused"
+         * and "resumed". The primary use case of this is to reduce CPU, memory, and power load
+         * when you need your vision pipeline running, but do not require a live preview on the
+         * robot controller screen. For instance, this could be useful if you wish to see the live
+         * camera preview as you are initializing your robot, but you no longer require the live
+         * preview after you have finished your initialization process; pausing the viewport does
+         * not stop running your pipeline.
+         *
+         * Here we demonstrate dynamically pausing/resuming the viewport when the user taps it
+         */
+
+        /*viewportPaused = !viewportPaused;
+
+        if(viewportPaused)
+        {
+            webcam.pauseViewport();
+        }
+        else
+        {
+            webcam.resumeViewport();
+        }*/
+    }
+
 }
