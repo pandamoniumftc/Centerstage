@@ -7,9 +7,18 @@ package org.firstinspires.ftc.teamcode.CurrentSeason.Util;
 //velocity is the derivative of position, integrate for position with respected time
 @SuppressWarnings("FieldCanBeLocal")
 public class MotionProfile {
-    private double accel, acceleration_dt, acceleration_distance, deceleration_dt, deceleration_time, cruise_distance, cruise_current_dt, cruise_dt, entire_dt, halfway_distance;
+    private static double accel;
+    private static double acceleration_dt;
+    private static double acceleration_distance;
+    private static double deceleration_dt;
+    private static double deceleration_time;
+    private static double cruise_distance;
+    private static double cruise_current_dt;
+    private static double cruise_dt;
+    private static double entire_dt;
+    private static double halfway_distance;
 
-    double motionProfile(double max_acceleration, double max_velocity, double distance, double elapsed_time) {
+    public static double motionProfile(double max_acceleration, double max_velocity, double distance, double elapsed_time) {
 
         acceleration_dt = max_velocity / max_acceleration;
 
@@ -59,7 +68,13 @@ public class MotionProfile {
             return acceleration_distance + cruise_distance + max_velocity * deceleration_time - 0.5 * max_acceleration * Math.pow(deceleration_time, 2);
         }
     }
-    /*public double MotionProfilePosition(){
-        return 0.00;
-    }*/
+    public static double motionProfile_position() {
+        Math.
+    }
+    public static double motionProfile_velocity() {
+
+    }
+    public static double motionProfile_acceleration() {
+
+    }
 }

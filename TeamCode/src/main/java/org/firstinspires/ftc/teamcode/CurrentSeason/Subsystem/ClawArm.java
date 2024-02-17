@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractSubsystem;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.Po;
+import org.firstinspires.ftc.teamcode.CurrentSeason.Util.MotionProfile;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Util.PIDFController;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Util.Toggle;
 import org.firstinspires.ftc.teamcode.CurvesPort.CurveSequence;
@@ -112,9 +113,12 @@ public class ClawArm extends AbstractSubsystem {
         if (rightClosed) {clawServo1.setPosition(servoposition[0]);}
     }
     public void setArmPosition(int targetPos) {
-        double armAngle = ((((double) armMotor.getCurrentPosition() - armPosOffset) / encoderResolution) * 2 * Math.PI) / gearRatio;
+        /*double armAngle = ((((double) armMotor.getCurrentPosition() - armPosOffset) / encoderResolution) * 2 * Math.PI) / gearRatio;
         double pid = armController.calculate(armMotor.getCurrentPosition(), targetPos, armAngleFeedforward(armAngle));
-        armMotor.setPower(this.ArmProfile.evaluate(Math.abs(Range.clip(pid, -1, 1))) * Math.signum(pid));
+        armMotor.setPower(this.ArmProfile.evaluate(Math.abs(Range.clip(pid, -1, 1))) * Math.signum(pid));*/
+        double x = MotionProfile.motionProfile_position    (10,10,.5,2);
+        double v = MotionProfile.motionProfile_velocity    ();
+        double a = MotionProfile.motionProfile_acceleration();
     }
     public double armAngleFeedforward(double armAngle) {
         if (armAngle <= (Math.PI/2) && armAngle >= 0) {
