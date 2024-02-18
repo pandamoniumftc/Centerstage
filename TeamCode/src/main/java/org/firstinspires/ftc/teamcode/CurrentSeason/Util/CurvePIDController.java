@@ -62,7 +62,7 @@ public class CurvePIDController {
 
         input = Range.clip(abs(input), curve.minX, curve.maxX);
 
-        return sign * curve.evaluate(input);
+        return sign * curve.evaluate(input)[0];
 
 
     }

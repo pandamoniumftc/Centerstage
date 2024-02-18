@@ -1,4 +1,7 @@
 package org.firstinspires.ftc.teamcode.CurrentSeason.Util;
+
+import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
+
 //TODO: input time and get an x and a y value
 //TODO: find the derivative of the variant degree Bezier curve (once to find velocity, twice to find acceleration)
 //TODO: make functions to get reference pos, velocity, and acceleration based on time
@@ -64,17 +67,19 @@ public class MotionProfile {
             cruise_distance = max_velocity * cruise_dt;
             deceleration_time = elapsed_time - deceleration_time;
 
-            // use the kinematic equations to calculate the instantaneous desired position
             return acceleration_distance + cruise_distance + max_velocity * deceleration_time - 0.5 * max_acceleration * Math.pow(deceleration_time, 2);
         }
     }
     public static double motionProfile_position() {
-        Math.
+        //TODO: make position part and find out how to make it
+        return 0;
     }
     public static double motionProfile_velocity() {
-
+        //TODO: take derivative of position
+        return 0;
     }
     public static double motionProfile_acceleration() {
-
+        //TODO: take derivative of velocity
+        return 0;
     }
 }

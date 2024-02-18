@@ -113,12 +113,16 @@ public class ClawArm extends AbstractSubsystem {
         if (rightClosed) {clawServo1.setPosition(servoposition[0]);}
     }
     public void setArmPosition(int targetPos) {
-        /*double armAngle = ((((double) armMotor.getCurrentPosition() - armPosOffset) / encoderResolution) * 2 * Math.PI) / gearRatio;
+        double armAngle = ((((double) armMotor.getCurrentPosition() - armPosOffset) / encoderResolution) * 2 * Math.PI) / gearRatio;
         double pid = armController.calculate(armMotor.getCurrentPosition(), targetPos, armAngleFeedforward(armAngle));
-        armMotor.setPower(this.ArmProfile.evaluate(Math.abs(Range.clip(pid, -1, 1))) * Math.signum(pid));*/
-        double x = MotionProfile.motionProfile_position    (10,10,.5,2);
-        double v = MotionProfile.motionProfile_velocity    ();
-        double a = MotionProfile.motionProfile_acceleration();
+        armMotor.setPower(this.ArmProfile.evaluate(Math.abs(Range.clip(pid, -1, 1))) * Math.signum(pid));
+        /*
+        double x = MotionProfile.motionProfile_position    (10, 10, .5, 2);
+        double v = MotionProfile.motionProfile_velocity    (x, x, x, x   );
+        double a = MotionProfile.motionProfile_acceleration(x, x, x, x   );
+
+        double motorPower = ( x - motor. getPosition()) * Kp + Kv * v + Ka * a;
+        */
     }
     public double armAngleFeedforward(double armAngle) {
         if (armAngle <= (Math.PI/2) && armAngle >= 0) {

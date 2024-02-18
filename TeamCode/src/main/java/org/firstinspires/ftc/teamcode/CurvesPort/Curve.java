@@ -15,5 +15,5 @@ public abstract class Curve {
     /**
      * @return the output of the curve at a value (t) between 0 and 1
      */
-    abstract double evaluate(double t);
+    abstract double[] evaluate(double t);
 }
