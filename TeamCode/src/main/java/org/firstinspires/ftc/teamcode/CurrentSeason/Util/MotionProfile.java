@@ -70,16 +70,4 @@ public class MotionProfile {
             return acceleration_distance + cruise_distance + max_velocity * deceleration_time - 0.5 * max_acceleration * Math.pow(deceleration_time, 2);
         }
     }
-    public static double motionProfile_position() {
-        //TODO: make position part and find out how to make it
-        return 0;
-    }
-    public static double motionProfile_velocity() {
-        //TODO: take derivative of position
-        return 0;
-    }
-    public static double motionProfile_acceleration() {
-        //TODO: take derivative of velocity
-        return 0;
-    }
 }
