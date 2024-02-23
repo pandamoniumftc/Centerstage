@@ -1,21 +1,21 @@
 package org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractSubsystem;
-import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.Po;
-import org.firstinspires.ftc.teamcode.CurrentSeason.Util.MotionProfile;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Util.PIDFController;
+import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
+import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractRobot;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Util.Toggle;
 import org.firstinspires.ftc.teamcode.CurvesPort.CurveSequence;
-import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
+import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.Po;
 import org.opencv.core.Point;
 
 import java.io.IOException;
+import java.util.Timer;
 
 public class ClawArm extends AbstractSubsystem {
     Po robot;
@@ -26,6 +26,9 @@ public class ClawArm extends AbstractSubsystem {
     public Toggle lifted = new Toggle(false);
     public Toggle finiteState = new Toggle(false);
     public double armAngle;
+    public double armPosition;
+    public double armVelocity;
+    public double armAcceleration;
     public CurveSequence ArmProfile;
     private final double[] servoposition = new double[] {0.5, 0.44, 0.05, .11};
 
@@ -33,6 +36,8 @@ public class ClawArm extends AbstractSubsystem {
     private final double armPosOffset = 85.0;
     private final double encoderResolution = 537.7;
     private final double gearRatio = 3;
+    private final double animationTime = 1; //arm movment time in seconds
+    Timer animationClock = new Timer();
 
     public ClawArm(AbstractRobot robot, String am, String ps, String cs1, String cs2, Point[] ArmCurve) {
         super(robot);
@@ -116,13 +121,13 @@ public class ClawArm extends AbstractSubsystem {
         double armAngle = ((((double) armMotor.getCurrentPosition() - armPosOffset) / encoderResolution) * 2 * Math.PI) / gearRatio;
         double pid = armController.calculate(armMotor.getCurrentPosition(), targetPos, armAngleFeedforward(armAngle));
         armMotor.setPower(this.ArmProfile.evaluate(Math.abs(Range.clip(pid, -1, 1))) * Math.signum(pid));
-        /*
-        double x = MotionProfile.motionProfile_position    (10, 10, .5, 2);
-        double v = MotionProfile.motionProfile_velocity    (x, x, x, x   );
-        double a = MotionProfile.motionProfile_acceleration(x, x, x, x   );
 
-        double motorPower = ( x - motor. getPosition()) * Kp + Kv * v + Ka * a;
-        */
+        //TODO make timer for the decimal percentage of time elapsed through animation time to plug into the eval function: https://stackoverflow.com/questions/4044726/how-to-set-a-timer-in-java
+        //TODO get t from targetPos?
+        armPosition     = VariantDegreeBezier.evaluate(1) [0];
+        armVelocity     = VariantDegreeBezier.evaluate(1) [1];
+        armAcceleration = VariantDegreeBezier.evaluate(1) [2];
+        //armMotor.setPower( armPosition - armMotor.getCurrentPosition()) * Kp + Kv * armVelocity + Ka * armAcceleration;
     }
     public double armAngleFeedforward(double armAngle) {
         if (armAngle <= (Math.PI/2) && armAngle >= 0) {
