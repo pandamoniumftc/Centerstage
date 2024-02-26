@@ -39,7 +39,7 @@ public class VariantDegreeBezier extends Curve {
     public static double[] out = new double[3];
 
     public static double[] evaluate(double t) {
-        //Graph: https://www.desmos.com/calculator/zninnsocba  <-- visual of whats going on
+        //Graph: https://www.desmos.com/calculator/vhnof1zjsh  <-- visual of whats going on
         //pos:   f(x) = (1-t)^3 * p0 + (3t(1-t)^2 * p1) + (3(1-t)t^2 * p2 + (t^3 * p3)
         //velo:  f'(x) = -3(1-t)^2 * p0 + (3-12t + 9x^2) * p1 + (6x-9x^2) * p2 + (3x^2) * p3
         //accel: f''(x) = 6 * (1-t) * p0 + (-12 + 18t) * p1 + (6-18t) * p2 + 6t * p3
