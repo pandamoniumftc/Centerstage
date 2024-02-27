@@ -16,25 +16,23 @@ import java.io.IOException;
 public class LinearSlides extends AbstractSubsystem {
     Po robot;
     public DcMotor lSlideMotor, rSlideMotor;
-    public int[] slidesPos = new int[] {
-            /* default pos */ 0,
-            /* first level */ 500,
-            /* second level */ 1000,
-            /* third level*/ 2000};
     public final int[] slidesBounds = new int[] {
             /* min */ 0,
             /* max */ 2000};
-    public PIDFController slidesController = new PIDFController(1, 0, 0, 1);
-    public Toggle resetSlidePosition = new Toggle(false);
-    public Toggle goToBottomLine = new Toggle(false);
-    public Toggle goToMiddleLine = new Toggle(false);
-    public Toggle goToTopLine = new Toggle(false);
+    public PIDFController slidesController;
+    public Toggle liftSlide = new Toggle(false);
+    public Toggle lowerSlide = new Toggle(false);
+    public Toggle hang = new Toggle(false);
+    private long initTime;
+    public int targetPos = 0;
     public LinearSlides(AbstractRobot robot, String lsm, String rsm) {
         super(robot);
         this.robot = (Po) robot;
 
         lSlideMotor = robot.hardwareMap.get(DcMotor.class, lsm);
         rSlideMotor = robot.hardwareMap.get(DcMotor.class, rsm);
+
+        slidesController = new PIDFController(0.005, 0.001, 0.0001, 0.0001);
 
         lSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rSlideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -52,61 +50,75 @@ public class LinearSlides extends AbstractSubsystem {
     public void start() {
         lSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        initTime = System.currentTimeMillis();
     }
 
     @Override
     public void driverLoop() {
-        double power = -robot.gamepad2.right_stick_y;
+        // timer for hang
+        if (System.currentTimeMillis() - initTime > 120000) {
+            hang.updateState(robot.gamepad2.y);
+        }
+        // changes the height by this amount
+        int delta = 100;
 
-        if (robot.state == Po.robotState.GRABBED_PIXEL || robot.state == Po.robotState.WAITING_TO_DEPOSIT || robot.state == Po.robotState.DEPOSITED) {
-
-
-            resetSlidePosition.updateState(robot.gamepad2.dpad_up);
-            goToBottomLine.updateState(robot.gamepad2.dpad_left);
-            goToMiddleLine.updateState(robot.gamepad2.dpad_down);
-            goToTopLine.updateState(robot.gamepad2.dpad_right);
+        // increases target pos by delta val, caps slides at max
+        if (liftSlide.state) {
+            targetPos += delta;
+            liftSlide.state = false;
+        }
+        else if ((targetPos + delta) < slidesBounds[1] && robot.state == Po.robotState.WAITING_TO_DEPOSIT) {
+            liftSlide.updateState(robot.gamepad2.dpad_up);
         }
 
-        lSlideMotor.setPower(power);
-        rSlideMotor.setPower(power);
-
-        if (robot.state == Po.robotState.HANGING) {
-
+        // decreases target pos by delta val, caps slides at min
+        if (lowerSlide.state) {
+            targetPos -= delta;
+            lowerSlide.state = false;
+        }
+        else if ((targetPos - delta) > slidesBounds[0] && robot.state == Po.robotState.WAITING_TO_DEPOSIT) {
+            lowerSlide.updateState(robot.gamepad2.dpad_down);
         }
 
-        if (lSlideMotor.getCurrentPosition() < slidesBounds[0] && rSlideMotor.getCurrentPosition() < slidesBounds[0]) {
-            power = Math.min(0, power);
+        // set slides to target pos during deposit state, resets slides position after deposit state
+        if (robot.state == Po.robotState.WAITING_TO_DEPOSIT) {
+            setSlidesPosition(targetPos);
         }
-        if (lSlideMotor.getCurrentPosition() > slidesBounds[1] && rSlideMotor.getCurrentPosition() > slidesBounds[1]) {
-            power = Math.max(0, power);
+        else if (robot.state == Po.robotState.DEPOSITED) {
+            setSlidesPosition(0);
         }
 
-        if (resetSlidePosition.state) {
-            lSlideMotor.setPower(slidesController.calculate(lSlideMotor.getCurrentPosition(), slidesPos[0], 0));
-            rSlideMotor.setPower(slidesController.calculate(rSlideMotor.getCurrentPosition(), slidesPos[0], 0));
+        // goes into hang state
+        if (hang.state) {
+            robot.state = Po.robotState.HANGING;
+            lSlideMotor.setPower(-robot.gamepad2.right_stick_y);
+            rSlideMotor.setPower(-robot.gamepad2.right_stick_y);
         }
-        if (goToBottomLine.state) {
-            lSlideMotor.setPower(slidesController.calculate(lSlideMotor.getCurrentPosition(), slidesPos[1], 0));
-            rSlideMotor.setPower(slidesController.calculate(rSlideMotor.getCurrentPosition(), slidesPos[1], 0));
-        }
-        if (goToMiddleLine.state) {
-            lSlideMotor.setPower(slidesController.calculate(lSlideMotor.getCurrentPosition(), slidesPos[2], 0));
-            rSlideMotor.setPower(slidesController.calculate(rSlideMotor.getCurrentPosition(), slidesPos[2], 0));
-        }
-        if (goToTopLine.state) {
-            lSlideMotor.setPower(slidesController.calculate(lSlideMotor.getCurrentPosition(), slidesPos[3], 0));
-            rSlideMotor.setPower(slidesController.calculate(rSlideMotor.getCurrentPosition(), slidesPos[3], 0));
-        }
+
+        /*if (robot.state == Po.robotState.WAITING_TO_DEPOSIT || robot.state == Po.robotState.DEPOSITED) {
+            double power = -robot.gamepad2.right_stick_y;
+
+            if (lSlideMotor.getCurrentPosition() < slidesBounds[0] && rSlideMotor.getCurrentPosition() < slidesBounds[0]) {
+                power = Math.min(0, power);
+            }
+            if (lSlideMotor.getCurrentPosition() > slidesBounds[1] && rSlideMotor.getCurrentPosition() > slidesBounds[1]) {
+                power = Math.max(0, power);
+            }
+
+            lSlideMotor.setPower(power);
+            rSlideMotor.setPower(power);
+        }*/
 
         telemetry.addData("left slide motor: ", lSlideMotor.getCurrentPosition());
         telemetry.addData("right slide motor: ", rSlideMotor.getCurrentPosition());
+        telemetry.addData("lift: ", liftSlide.state);
+        telemetry.addData("lower: ", lowerSlide.state);
+        telemetry.addData("target: ", targetPos);
     }
-
     public void setSlidesPosition(int targetPos) {
-        lSlideMotor.setPower(slidesController.calculate(lSlideMotor.getCurrentPosition(), targetPos, 0));
-        rSlideMotor.setPower(slidesController.calculate(rSlideMotor.getCurrentPosition(), targetPos, 0));
+        lSlideMotor.setPower(slidesController.calculate(lSlideMotor.getCurrentPosition(), targetPos, 1));
+        rSlideMotor.setPower(slidesController.calculate(rSlideMotor.getCurrentPosition(), targetPos, 1));
     }
-
     @Override
     public void stop() {
 
