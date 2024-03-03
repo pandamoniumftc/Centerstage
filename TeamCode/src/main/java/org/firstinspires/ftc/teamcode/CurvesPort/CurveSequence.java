@@ -33,7 +33,7 @@ public class CurveSequence {
         return new CurveSequence(curve);
     }
 
-    public double evaluate(double t) {
+    public double[] evaluate(double t) {
         for (Curve curve : curves) {
             double minT = (curve.minX - minX)/length;
             double maxT = (curve.maxX - minX)/length;

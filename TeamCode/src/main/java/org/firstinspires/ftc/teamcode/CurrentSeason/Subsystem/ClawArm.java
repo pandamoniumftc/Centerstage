@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.CurrentSeason.Subsystem;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad1;
+
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.CurrentSeason.Util.Timer;
 import org.firstinspires.ftc.teamcode.AbstractClasses.AbstractSubsystem;
 import org.firstinspires.ftc.teamcode.CurrentSeason.Util.PIDFController;
 import org.firstinspires.ftc.teamcode.CurvesPort.VariantDegreeBezier;
@@ -15,7 +18,6 @@ import org.firstinspires.ftc.teamcode.CurrentSeason.Robots.Po;
 import org.opencv.core.Point;
 
 import java.io.IOException;
-import java.util.Timer;
 
 public class ClawArm extends AbstractSubsystem {
     Po robot;
@@ -36,8 +38,7 @@ public class ClawArm extends AbstractSubsystem {
     private final double armPosOffset = 85.0;
     private final double encoderResolution = 537.7;
     private final double gearRatio = 3;
-    private final double animationTime = 1; //arm movment time in seconds
-    Timer animationClock = new Timer();
+    public int animationTime = 1000; //arm movement time in ms
 
     public ClawArm(AbstractRobot robot, String am, String ps, String cs1, String cs2, Point[] ArmCurve) {
         super(robot);
@@ -85,6 +86,8 @@ public class ClawArm extends AbstractSubsystem {
 
             if (robot.state == Po.robotState.DEPOSITED && !lifted.state) {robot.state = Po.robotState.NEUTRAL;}
 
+            if (robot.gamepad2.left_stick_button) {Timer.newArmTask(animationTime);}
+
             setArmPosition(robot.state.getArmPos());
             pivotServo.setPosition(robot.state.getPivotPos());
             openClaw(leftOpened.state, rightOpened.state);
@@ -107,6 +110,7 @@ public class ClawArm extends AbstractSubsystem {
         telemetry.addData("left: ", leftOpened.state);
         telemetry.addData("right: ", rightOpened.state);
         telemetry.addData("arm motor: ", armMotor.getCurrentPosition());
+        telemetry.addData("t: ", Timer.x);
     }
 
     public void openClaw(boolean leftOpened, boolean rightOpened) {
@@ -118,16 +122,19 @@ public class ClawArm extends AbstractSubsystem {
         if (rightClosed) {clawServo1.setPosition(servoposition[0]);}
     }
     public void setArmPosition(int targetPos) {
-        double armAngle = ((((double) armMotor.getCurrentPosition() - armPosOffset) / encoderResolution) * 2 * Math.PI) / gearRatio;
-        double pid = armController.calculate(armMotor.getCurrentPosition(), targetPos, armAngleFeedforward(armAngle));
-        armMotor.setPower(this.ArmProfile.evaluate(Math.abs(Range.clip(pid, -1, 1))) * Math.signum(pid));
+        double t;
 
-        //TODO make timer for the decimal percentage of time elapsed through animation time to plug into the eval function: https://stackoverflow.com/questions/4044726/how-to-set-a-timer-in-java
-        //TODO get t from targetPos?
-        armPosition     = VariantDegreeBezier.evaluate(1) [0];
-        armVelocity     = VariantDegreeBezier.evaluate(1) [1];
-        armAcceleration = VariantDegreeBezier.evaluate(1) [2];
-        //armMotor.setPower( armPosition - armMotor.getCurrentPosition()) * Kp + Kv * armVelocity + Ka * armAcceleration;
+        //TODO tune these variables
+        double Kp = 1;
+        double Kv = 0.00;
+        double Ka = 0.00;
+
+        t = (Timer.x - ArmProfile.minX)/(ArmProfile.maxX - ArmProfile.minX);
+
+        armPosition     = this.ArmProfile.evaluate(t) [0];
+        armVelocity     = this.ArmProfile.evaluate(t) [1];
+        armAcceleration = this.ArmProfile.evaluate(t) [2];
+        armMotor.setPower( (armPosition - armMotor.getCurrentPosition()) * Kp + Kv * armVelocity + Ka * armAcceleration);
     }
     public double armAngleFeedforward(double armAngle) {
         if (armAngle <= (Math.PI/2) && armAngle >= 0) {

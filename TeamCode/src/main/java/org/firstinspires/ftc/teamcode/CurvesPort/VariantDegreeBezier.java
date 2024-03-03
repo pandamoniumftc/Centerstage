@@ -11,8 +11,8 @@ public class VariantDegreeBezier extends Curve {
      */
     public static Point[] points;
 
-    public double minX;
-    public double maxX;
+    public static double minX;
+    public static double maxX;
 
     public VariantDegreeBezier(Point[] points) throws ArrayIndexOutOfBoundsException {
         if (points.length != 4) {
@@ -38,7 +38,7 @@ public class VariantDegreeBezier extends Curve {
 
     public static double[] out = new double[3];
 
-    public static double[] evaluate(double t) {
+    public double[] evaluate(double t) {
         //Graph: https://www.desmos.com/calculator/vhnof1zjsh  <-- visual of whats going on
         //pos:   f(x) = (1-t)^3 * p0 + (3t(1-t)^2 * p1) + (3(1-t)t^2 * p2 + (t^3 * p3)
         //velo:  f'(x) = -3(1-t)^2 * p0 + (3-12t + 9x^2) * p1 + (6x-9x^2) * p2 + (3x^2) * p3
@@ -49,6 +49,9 @@ public class VariantDegreeBezier extends Curve {
          * @return out an array consisting of the y value and the derivative of t
          */
 
+
+        //x = t(a - b) + b
+        //let x = (this.end.x - this.begin.x) * t + this.begin.x;[]
         //y given t (position)
         out[0] = (pow(1 - t, 3) * points[0].y) +
                 (3 * t * pow(1 - t, 2) * points[1].y) +
@@ -66,6 +69,9 @@ public class VariantDegreeBezier extends Curve {
                 (-12 + 18 * t) * points[1].y +
                 (6 - 18 * t) * points[2].y +
                 (6 * t * points[3].y);
+
+        //x - minX/maxX-minX
+        //out[4] = (x - this.minX)/(this.maxX - this.minX);
 
         return out;
     }
