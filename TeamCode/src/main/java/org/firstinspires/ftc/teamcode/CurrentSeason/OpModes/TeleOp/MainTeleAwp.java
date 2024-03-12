@@ -43,12 +43,19 @@ public class MainTeleAwp extends AbstractTeleOp {
             public void onError(int errorCode) {
                 /*
                  * This will be called if the slidesCamera could not be opened
-                 /*/
+                 */
             }
         });
 
         robot.mecanum.drive.setPoseEstimate(Po.currentPos);
 
+    }
+
+    @Override
+    public void onDriverUpdate() {
+        if (robot.mecanum.aligning.state) {
+            robot.mecanum.align(pixelPipeline.getError(), 0.01);
+        }
     }
 
     @Override

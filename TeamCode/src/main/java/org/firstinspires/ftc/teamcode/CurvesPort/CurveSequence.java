@@ -26,14 +26,22 @@ public class CurveSequence {
         System.out.println("minX: " + this.minX + ", maxX: " + this.maxX + ", length: " + this.length);
     }
 
-    public static CurveSequence init(Point[] points) {
-        VariantDegreeBezier vdbc = new VariantDegreeBezier(points);
-        Curve[] curve = new Curve[] {vdbc};
-
+    public static CurveSequence init(Point[][] points) {
+        Curve[] curve = new Curve[points.length];
+        for (int i = 0; i < points.length; i++) {
+            if (points[i].length == 4) {
+                VariantDegreeBezier vdbc = new VariantDegreeBezier(points[i]);
+                curve[i] = vdbc;
+            }
+            else if (points[i].length == 2) {
+                LinearBezierCurve lbc = new LinearBezierCurve(points[i]);
+                curve[i] = lbc;
+            }
+        }
         return new CurveSequence(curve);
     }
 
-    public double evaluate(double t) {
+    public double[] evaluate(double t) {
         for (Curve curve : curves) {
             double minT = (curve.minX - minX)/length;
             double maxT = (curve.maxX - minX)/length;

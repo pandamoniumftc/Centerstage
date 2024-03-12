@@ -21,13 +21,17 @@ import org.opencv.core.Point;
 public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     Po robot;
     public SampleMecanumDrive drive;
-    Toggle resetAngle = new Toggle(false);
+    VariantDegreeBezier MovementProfile;
+    public Toggle resetAngle, aligning;
 
-    public RoadRunnerMecanumDrive(AbstractRobot robot, Point[] MovementCurve) {
+    public RoadRunnerMecanumDrive(AbstractRobot robot, Point[] MovementPoints) {
         super(robot);
         this.robot = (Po) robot;
 
-        //this.MovementProfile = CurveSequence.init(MovementCurve);
+        resetAngle = new Toggle(false);
+        aligning = new Toggle(false);
+
+        this.MovementProfile = new VariantDegreeBezier(MovementPoints);
     }
     @Override
     public void init() {
@@ -43,19 +47,30 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
     @Override
     public void driverLoop() {
         resetAngle.updateState(robot.gamepad1.right_bumper);
+        aligning.updateState(robot.gamepad1.left_bumper);
 
         Vector2d input = new Vector2d(
                 -robot.gamepad1.left_stick_y,
                 -robot.gamepad1.left_stick_x
         ).rotated(-drive.getPoseEstimate().getHeading()); //field centric
 
-        drive.setWeightedDrivePower(
-                new Pose2d(
-                        input.getX(),
-                        input.getY(),
-                        -robot.gamepad1.right_stick_x
-                )
-        );
+        if (aligning.state && robot.state == Po.robotState.INTAKING) {
+            drive.setWeightedDrivePower(
+                    new Pose2d(
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(input.getX(), -1.0, 1.0)))[0] * Math.signum(input.getX()) * (robot.gamepad1.right_trigger * 0.5 + (1 - robot.gamepad1.right_trigger)),
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(input.getY(), -1.0, 1.0)))[0] * Math.signum(input.getY()) * (robot.gamepad1.right_trigger * 0.5 + (1 - robot.gamepad1.right_trigger)),
+                            0
+                    )
+            );
+        } else {
+            drive.setWeightedDrivePower(
+                    new Pose2d(
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(input.getX(), -1.0, 1.0)))[0] * Math.signum(input.getX()) * robot.slides.strength,
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(input.getY(), -1.0, 1.0)))[0] * Math.signum(input.getY()) * robot.slides.strength,
+                            this.MovementProfile.evaluate(Math.abs(Range.clip(-robot.gamepad1.right_stick_x, -1.0, 1.0)))[0] * Math.signum(-robot.gamepad1.right_stick_x) * robot.slides.strength
+                    )
+            );
+        }
 
         drive.update();
 
@@ -64,12 +79,11 @@ public class RoadRunnerMecanumDrive extends AbstractSubsystem {
             resetAngle.state = false;
         }
 
-        telemetry.addData("x: ", drive.getPoseEstimate().getX());
-        telemetry.addData("y: ", drive.getPoseEstimate().getY());
-        telemetry.addData("c: ", drive.getPoseEstimate().getHeading());
-        //telemetry.addData("left: ", drive.leftRear.getCurrentPosition());
-        //telemetry.addData("right: ", drive.rightFront.getCurrentPosition());
-        //telemetry.addData("front: ", drive.leftFront.getCurrentPosition());
+        telemetry.addData("CURRENT POS: ", drive.getPoseEstimate().getX() + " " + drive.getPoseEstimate().getY() + " " + drive.getPoseEstimate().getHeading());
+    }
+
+    public void align(double error, double kp) {
+        robot.mecanum.drive.turn(error * kp);
     }
 
     @Override

@@ -13,16 +13,15 @@ public class airplane extends AbstractSubsystem {
     Po robot;
     public Servo airplaneservo;
     Toggle release = new Toggle(false);
-    double [] servoposition = new double[] {0.5 , 0.75};
-    private long initTime;
+    double [] servoposition = new double[] {0.25 , 0.215};
     public airplane(AbstractRobot robot, String as) {
         super(robot);
+        this.robot = (Po) robot;
         airplaneservo = robot.hardwareMap.get(Servo.class, as);
     }
 
     @Override
     public void init() throws IOException {
-        initTime = System.currentTimeMillis();
     }
 
     @Override
@@ -32,9 +31,7 @@ public class airplane extends AbstractSubsystem {
 
     @Override
     public void driverLoop() {
-        if (System.currentTimeMillis() - initTime > 120000) {
-            release.updateState(robot.gamepad2.a);
-        }
+        release.updateState(robot.gamepad2.a);
         airplaneservo.setPosition(servoposition[release.state ? 1 : 0]);
     }
 

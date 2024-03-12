@@ -9,7 +9,7 @@ public class VariantDegreeBezier extends Curve {
     /**
      * Must be length of 4
      */
-    public static Point[] points;
+    public Point[] points;
 
     public double minX;
     public double maxX;
@@ -36,9 +36,7 @@ public class VariantDegreeBezier extends Curve {
         System.out.println("bezier min: " + super.minX + ", bezier max: " + super.maxX);
     }
 
-    public static double[] out = new double[3];
-
-    public static double[] evaluate(double t) {
+    public double[] evaluate(double t) {
         //Graph: https://www.desmos.com/calculator/zninnsocba  <-- visual of whats going on
         //pos:   f(x) = (1-t)^3 * p0 + (3t(1-t)^2 * p1) + (3(1-t)t^2 * p2 + (t^3 * p3)
         //velo:  f'(x) = -3(1-t)^2 * p0 + (3-12t + 9x^2) * p1 + (6x-9x^2) * p2 + (3x^2) * p3
@@ -48,6 +46,8 @@ public class VariantDegreeBezier extends Curve {
          * @param t The distance along a curve (double)
          * @return out an array consisting of the y value and the derivative of t
          */
+
+        double[] out = new double[3];
 
         //y given t (position)
         out[0] = (pow(1 - t, 3) * points[0].y) +

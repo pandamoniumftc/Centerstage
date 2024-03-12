@@ -16,45 +16,74 @@ public class Po extends AbstractRobot {
     public ClawArm arm;
     public airplane airplane;
     public enum robotState {
-        NEUTRAL(0, 0.95),
-        INTAKING(0, 0.50),
-        GRABBED_PIXEL(0, 0.75),
-        WAITING_TO_DEPOSIT(750, .85),
-        DEPOSITED(200, .95),
-        HANGING(350, .4);
-        private final int armPos;
+        NEUTRAL(false, 0.5),
+        INTAKING(false, 0.5),
+        GRABBED_PIXEL(false, 0.5),
+        DEPOSIT(true, .83),
+        HANGING(true, .83);
+        private final boolean lifted;
         private final double pivotPos;
 
-        robotState(int armPos, double pivotPos) {
-            this.armPos = armPos;
+        robotState(boolean lifted, double pivotPos) {
+            this.lifted = lifted;
             this.pivotPos = pivotPos;
         }
-
-        public int getArmPos() { return armPos; }
+        public boolean getLifted() { return lifted; }
         public double getPivotPos() { return pivotPos; }
     }
     public robotState state;
+    private long initTime;
     public static Pose2d currentPos = new Pose2d();
     private final Point[] MovementPoints = new Point[] {
-            new Point(0, 0.125),
-            new Point(0, 1),
-            new Point(1, 0.1875),
-            new Point(1, 1)
+            new Point(0, 0.2),
+            new Point(1, 0.2),
+            new Point(1, 0.2),
+            new Point(1, .66)
     };
-    private final Point[] ArmPoints = new Point[] {
-            new Point(0, 0),
-            new Point(0, 1),
-            new Point(0, 1),
-            new Point(1, .75)
+    private static final Point[][] ArmPoints = new Point[][] {
+                new Point[] {
+                        new Point(0, 0),
+                        new Point(0, 0),
+                        new Point(0, 0),
+                        new Point(.5, 415)
+                },
+                new Point[] {
+                        new Point(.5, 415),
+                        new Point(1, 830),
+                        new Point(1, 830),
+                        new Point(1, 830)
+            }
     };
-
+    private static final Point[][] SlidesPoint = new Point[][] {
+            new Point[] {
+                    new Point(0, 0),
+                    new Point(0, 0),
+                    new Point(0, 0),
+                    new Point(.5, .5)
+            },
+            new Point[] {
+                    new Point(.5, .5),
+                    new Point(1, 1),
+                    new Point(1, 1),
+                    new Point(1, 1)
+            }
+    };
     public Po(OpMode opMode) {
         super(opMode);
         mecanum = new RoadRunnerMecanumDrive(this, MovementPoints);
-        slides = new LinearSlides(this, "lsm", "rsm");
+        slides = new LinearSlides(this, "lsm", "rsm", SlidesPoint);
         arm = new ClawArm(this, "am", "ps", "cs1", "cs2", ArmPoints);
         airplane = new airplane(this, "as");
 
         state = robotState.NEUTRAL;
+    }
+    public boolean wait(double time, boolean startCondition) {
+        if (startCondition) {
+            return System.currentTimeMillis() - initTime > time * 1E3;
+        }
+        else {
+            initTime = System.currentTimeMillis();
+        }
+        return false;
     }
 }
