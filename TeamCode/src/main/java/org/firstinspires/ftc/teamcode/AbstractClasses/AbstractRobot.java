@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.RobotLog;
+import com.roboctopi.cuttlefish.queue.TaskQueue;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
@@ -16,11 +17,9 @@ public abstract class AbstractRobot {
     public final OpMode opMode;
     public final Telemetry telemetry;
     public final HardwareMap hardwareMap;
+    public TaskQueue queue;
 
     public ArrayList<AbstractSubsystem> subsystems;
-
-    //public RobotTeleOpConfig robotTeleOpConfig;
-    //public RobotAutoConfig robotAutoConfig;
 
     public Gamepad gamepad1, gamepad2;
 
@@ -30,9 +29,9 @@ public abstract class AbstractRobot {
         this.opMode =  opMode;
         this.telemetry = opMode.telemetry;
         this.hardwareMap = opMode.hardwareMap;
+        this.queue = new TaskQueue();
 
         subsystems = new ArrayList<>();
-
     }
 
     public void init() throws IllegalAccessException, IOException {

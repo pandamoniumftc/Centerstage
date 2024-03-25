@@ -24,7 +24,7 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
 @Config
-@TeleOp (name="pidf tuner")
+@TeleOp (name="old pidf tuner")
 public class PIDFTuner extends OpMode {
     Po robot;
     PIDFController controller;

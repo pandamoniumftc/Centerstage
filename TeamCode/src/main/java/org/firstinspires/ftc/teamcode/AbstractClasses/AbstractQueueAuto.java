@@ -2,11 +2,11 @@ package org.firstinspires.ftc.teamcode.AbstractClasses;
 
 import java.io.IOException;
 
-public abstract class AbstractAutonomous extends AbstractOpMode {
-
+public abstract class AbstractQueueAuto extends AbstractOpMode {
     public AbstractRobot robot;
-    public abstract void autonomous();
-
+    public abstract void detectionLoop();
+    public abstract void addTasks();
+    public abstract void queueLoop();
     @Override
     public final void runOpMode() {
 
@@ -18,9 +18,15 @@ public abstract class AbstractAutonomous extends AbstractOpMode {
             robot.init();
             onInit();
 
-            while(!isStarted() && !isStopRequested()) {}
+            while (!isStarted() && !isStopRequested()) {
+                detectionLoop();
+            }
 
-            autonomous();
+            addTasks();
+
+            while(!isStopRequested() && !robot.queue.getIdle()) {
+                queueLoop();
+            }
 
             robot.stop();
             super.onStop();
@@ -33,5 +39,4 @@ public abstract class AbstractAutonomous extends AbstractOpMode {
             e.printStackTrace();
         }
     }
-
 }
